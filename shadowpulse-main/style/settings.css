@@ -1,0 +1,296 @@
+/* ShadowPulse - style/settings.css */
+
+/* === SETTINGS MODAL === */
+
+.sp-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000001;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.75);
+  align-items: flex-end; /* move modal toward bottom */
+}
+
+.sp-settings-backdrop.sp-settings-open {
+  display: flex;
+}
+
+.sp-settings-modal {
+  min-width: 280px;
+  max-width: 420px;
+  padding: 16px 20px 16px;
+  border-radius: 12px;
+  background: var(--sp-bg-elevated);
+  border: 1px solid var(--sp-border);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(15,23,42,0.8);
+  color: var(--sp-text);
+  font-size: 13px;
+  margin-bottom: 96px; 
+}
+
+/* Header Redesign: Centered with Logo */
+.sp-settings-header {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+}
+
+.sp-settings-header-logo {
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  display: block;
+}
+
+.sp-settings-title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.sp-settings-version {
+  font-size: 11px;
+  color: var(--sp-text-soft);
+}
+
+.sp-settings-body {
+  margin-bottom: 10px;
+}
+
+/* Sections */
+.sp-settings-section {
+  margin-top: 12px;
+  padding: 8px 10px 0 10px; 
+  border-top: 1px dashed rgba(148,163,184,0.5);
+  margin-bottom: 10px;
+  text-align: center; 
+}
+
+/* Standard Section Title */
+.sp-settings-section-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+/* === NEW: SECTION HEADER WITH TOGGLE === */
+.sp-settings-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 6px;
+  min-height: 20px; /* Ensure space for the button */
+}
+
+.sp-settings-section-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  height: 20px;
+  
+  background: transparent;
+  border: 1px solid var(--sp-border);
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 0 8px;
+  cursor: pointer;
+  color: var(--sp-text-soft);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.sp-settings-section-toggle:hover {
+  color: var(--sp-accent);
+  border-color: var(--sp-accent);
+}
+
+.sp-settings-section-toggle.sp-attention {
+  color: var(--sp-accent);
+  border-color: var(--sp-accent);
+  font-weight: 700;
+}
+
+/* --- Standard Rows (Full width) --- */
+.sp-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0; 
+  gap: 12px;
+  width: 100%;
+}
+
+/* --- CENTERED BLOCK FOR ALL SECTIONS --- */
+/* Forces all content into a specific width column */
+.sp-settings-center-block {
+  display: flex;
+  flex-direction: column;
+  width: 320px; /* FIXED WIDTH to ensure equality */
+  margin: 0 auto;
+}
+
+.sp-settings-row-label {
+  font-size: 12px;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.sp-settings-row-value {
+  font-size: 12px;
+  text-align: right;
+  flex: 1;
+}
+
+/* Vertical Columns for Security Section */
+.sp-settings-col {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 0; 
+  width: 100%;
+}
+
+.sp-settings-label-block {
+  font-size: 12px;
+  color: var(--sp-text-soft);
+  margin-bottom: 4px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.sp-settings-input-group {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+/* Inputs / Selects */
+.sp-settings-select {
+  background: var(--sp-bg);
+  color: var(--sp-text);
+  border: 1px solid var(--sp-border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  width: 120px; /* Fixed width for alignment */
+  cursor: pointer;
+  text-align: right; /* Right align text like other values */
+}
+
+.sp-settings-label {
+  font-size: 13px;
+}
+
+.sp-settings-stat-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.sp-settings-link {
+  font-size: 12px;
+  color: var(--sp-accent);
+  text-decoration: none;
+}
+
+.sp-settings-link:hover {
+  text-decoration: underline;
+}
+
+.sp-settings-footer {
+  display: flex;
+  justify-content: center; /* Center the close button */
+  margin-top: 12px;
+}
+
+.sp-settings-close-btn {
+  border-radius: 999px;
+  border: 1px solid var(--sp-border);
+  background: transparent;
+  color: var(--sp-text);
+  padding: 4px 24px;
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.sp-settings-close-btn:hover {
+  border-color: var(--sp-accent);
+  color: var(--sp-accent);
+}
+
+/* Restore/Copy Elements */
+.sp-settings-restore-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--sp-border);
+  background: rgba(15,23,42,0.4);
+  flex: 1;
+  word-break: break-all;
+  text-align: left; 
+}
+
+.sp-settings-restore-copy,
+.sp-settings-restore-button {
+  border-radius: 6px;
+  border: 1px solid var(--sp-border);
+  background: transparent;
+  color: var(--sp-text);
+  padding: 0 10px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sp-settings-restore-copy:hover,
+.sp-settings-restore-button:hover {
+  border-color: var(--sp-accent);
+  color: var(--sp-accent);
+}
+
+.sp-settings-restore-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--sp-border);
+  background: rgba(15,23,42,0.3);
+  font-size: 12px;
+  color: var(--sp-text);
+}
+
+.sp-settings-restore-input::placeholder {
+  color: var(--sp-text-soft);
+}
+
+.sp-settings-restore-ack {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* ALIGN RIGHT */
+  gap: 8px;
+  margin-top: 0;
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.sp-settings-warning {
+  font-size: 12px;
+  color: #ef4444; /* Red warning color */
+  margin-top: 4px;
+  text-align: left;
+  width: 100%;
+  font-weight: 500;
+  display: none; /* Hidden via JS too, but good default */
+}

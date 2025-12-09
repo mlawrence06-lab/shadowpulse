@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "ShadowPulse",
+  "version": "0.25.37",
+  "description": "Page Information",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://bitcointalk.org/*"
+  ],
+  "background": {
+    "service_worker": "scripts/background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://bitcointalk.org/*"
+      ],
+      "js": [
+        "scripts/loader.js"
+      ],
+      "css": [
+        "style/main.css",
+        "style/settings.css"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "scripts/main.js",
+        "scripts/core/config.js",
+        "scripts/core/utils.js",
+        "scripts/core/state.js",
+        "scripts/core/api.js",
+        "scripts/core/pageContext.js",
+        "scripts/ui/logo.js",
+        "scripts/ui/ads.js",
+        "scripts/ui/stats.js",
+        "scripts/ui/votes.js",
+        "scripts/ui/control.js",
+        "scripts/ui/search.js",
+        "style/main.css",
+        "assets/icons/*",
+        "scripts/ui/settings.js",
+        "scripts/core/member.js"
+      ],
+      "matches": [
+        "*://bitcointalk.org/*"
+      ]
+    }
+  ]
+}
