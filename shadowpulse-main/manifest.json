@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ShadowPulse",
-  "version": "0.25.37",
+  "version": "0.25.38",
   "description": "Page Information",
   "permissions": [
     "storage"
