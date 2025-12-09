@@ -7,7 +7,7 @@
   --sp-text-soft: #4b5563;
   --sp-accent: #1E90FF;
   --sp-accent-soft: rgba(30,144,255,0.18);
-  /* NEW: Bluish tint for the Info Zone oval */
+  /* Re-added Oval Background Color */
   --sp-bg-oval: #e8f4ff; 
 }
 
@@ -19,22 +19,23 @@
   --sp-text-soft: #94a3b8;
   --sp-accent: #1E90FF;
   --sp-accent-soft: rgba(30,144,255,0.18);
-  /* NEW: Bluish tint for the Info Zone oval */
+  /* Re-added Oval Background Color */
   --sp-bg-oval: rgba(30, 144, 255, 0.12);
 }
 
 /* ShadowPulse - style/main.css */
 
-/* Logo Colors */
+/* === LOGO COLORS (Re-added Blue Default) === */
 .sp-logo-circle[data-vote-color="green"] {
-  --sp-logo-fill: #16a34a;
+  --sp-logo-fill: #16a34a; /* Green-600 */
   --sp-logo-fill-inner: #16a34a; 
 }
 .sp-root.sp-theme-dark .sp-logo-circle[data-vote-color="green"] {
-  --sp-logo-fill: #22c55e;
-  --sp-logo-fill-inner: #10b981;
+  --sp-logo-fill: #22c55e; /* Green-500 */
+  --sp-logo-fill-inner: #10b981; 
 }
 
+/* BLUE (Default) */
 .sp-logo-circle[data-vote-color="blue"] {
   --sp-logo-fill: var(--sp-accent);
   --sp-logo-fill-inner: var(--sp-accent);
@@ -45,26 +46,26 @@
 }
 
 .sp-logo-circle[data-vote-color="black"] {
-  --sp-logo-fill: #1f2937;
-  --sp-logo-fill-inner: #0f172a;
+  --sp-logo-fill: #1f2937; /* Gray-800 */
+  --sp-logo-fill-inner: #0f172a; 
 }
 .sp-root.sp-theme-dark .sp-logo-circle[data-vote-color="black"] {
-  --sp-logo-fill: #374151;
-  --sp-logo-fill-inner: #1f2937;
+  --sp-logo-fill: #374151; /* Gray-700 */
+  --sp-logo-fill-inner: #1f2937; 
 }
 
 .sp-logo-circle[data-vote-color="red"] {
-  --sp-logo-fill: #dc2626;
-  --sp-logo-fill-inner: #b91c1c;
+  --sp-logo-fill: #dc2626; /* Red-600 */
+  --sp-logo-fill-inner: #b91c1c; 
 }
 .sp-root.sp-theme-dark .sp-logo-circle[data-vote-color="red"] {
-  --sp-logo-fill: #ef4444;
-  --sp-logo-fill-inner: #dc2626;
+  --sp-logo-fill: #ef4444; /* Red-500 */
+  --sp-logo-fill-inner: #dc2626; 
 }
 
 /* Initial Hide */
 .sp-zone.sp-zone-loading {
-    visibility: hidden;
+    visibility: hidden; 
 }
 
 #shadowpulse-root,
@@ -95,7 +96,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: flex-start; 
+  justify-content: flex-start;
+  /* TIGHTENED PADDING: 4px on sides to match internal spacing */
   padding: 6px 4px;
   gap: 0;
 
@@ -133,27 +135,25 @@
   padding: 0 8px;
   flex: 0 0 auto;
   height: 100%;
-  min-height: 44px;
+  min-height: 44px; 
 }
 
-/* separators */
-/* Exclude Votes and Control zones to fix spacing gap */
-.sp-zone + .sp-zone:not(.sp-zone-ads):not(.sp-zone-stats):not(.sp-zone-votes):not(.sp-zone-control) {
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+/* separators: Removed left border/padding for clean look */
+.sp-zone + .sp-zone:not(.sp-zone-ads):not(.sp-zone-stats) {
+  border-left: none; 
   height: 32px;
   margin-left: 4px;
   padding-left: 12px;
 }
-.sp-theme-light .sp-zone + .sp-zone:not(.sp-zone-ads):not(.sp-zone-stats):not(.sp-zone-votes):not(.sp-zone-control) {
+.sp-theme-light .sp-zone + .sp-zone:not(.sp-zone-ads):not(.sp-zone-stats) {
   border-left-color: rgba(0, 0, 0, 0.1);
 }
 
-/* LOGO ZONE */
+/* === LOGO ZONE === */
 .sp-zone-logo {
-  margin-right: 2px;
+  margin-right: 2px; /* TIGHTENED: Was 8px */
 }
-
-/* Remove margin when minimized for perfect centering */
+/* Zero margin when minimized to center perfectly */
 .sp-root.sp-root-minimized .sp-zone-logo {
   margin-right: 0;
 }
@@ -186,22 +186,23 @@
   position: relative;
   z-index: 2;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 15px; /* Increased slightly for better visibility */
   letter-spacing: 0.03em;
 }
 
+/* dragging hint */
 body.sp-dragging {
   cursor: grabbing !important;
 }
 
-/* ADS ZONE */
+/* === ADS ZONE === */
 .sp-zone-ads {
   width: 150px;
   height: 50px;
   border: none;
   border-radius: 6px;
   overflow: hidden;
-  margin: 0 2px;
+  margin: 0 2px; /* TIGHTENED: Was 0 4px */
   padding: 0;
 }
 .sp-ads-iframe {
@@ -211,21 +212,22 @@ body.sp-dragging {
   height: 50px;
 }
 
-/* STATS ZONE */
+/* === STATS ZONE (Price) === */
 .sp-zone-stats {
   width: 110px;
   height: 50px;
   border: none;
   border-radius: 6px;
-  margin: 0 2px;
+  margin: 0 2px; /* TIGHTENED: Matches Ads/Logo spacing */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 0;
-  background: transparent;
+  background: transparent; 
 }
 
+/* The Price Text */
 .sp-stats-price {
   font-size: 13px;
   font-weight: 700;
@@ -235,20 +237,22 @@ body.sp-dragging {
   white-space: nowrap;
 }
 
+/* Color Modifiers for Trend */
 .sp-stats-price.sp-trend-up {
-  color: #16a34a;
+  color: #16a34a; 
 }
 .sp-theme-dark .sp-stats-price.sp-trend-up {
-  color: #22c55e;
+  color: #22c55e; 
 }
 
 .sp-stats-price.sp-trend-down {
-  color: #dc2626;
+  color: #dc2626; 
 }
 .sp-theme-dark .sp-stats-price.sp-trend-down {
-  color: #ef4444;
+  color: #ef4444; 
 }
 
+/* The Graph Container */
 .sp-stats-graph {
   width: 100%;
   height: 20px;
@@ -264,15 +268,15 @@ body.sp-dragging {
 }
 
 
-/* === INFO / VOTES ZONE (Oval) === */
+/* === VOTES / INFO ZONE (Oval) === */
 .sp-zone-votes {
   flex: 0 0 160px;
   width: 160px;
   justify-content: center;
-  padding: 0 16px; /* Increased to 16px to protect text edges */
-  margin: 0 2px;
+  padding: 0 16px; /* INCREASED: Protects text from oval edges */
+  margin: 0 2px;   /* TIGHTENED */
   
-  /* The Oval "Pill" Look with Bluish Tint */
+  /* Re-added Oval Look */
   background: var(--sp-bg-oval); 
   border-radius: 100px;
   height: 42px;    
@@ -308,19 +312,19 @@ body.sp-dragging {
   border-color: var(--sp-accent);
   background: var(--sp-accent-soft);
 }
-
-.sp-vote-desired {
-  border-color: var(--sp-accent);
-  background: var(--sp-accent-soft);
-  color: var(--sp-text);
-  font-weight: 500; 
-}
-
 .sp-vote-selected {
   border: 1px solid var(--sp-accent);
   background: var(--sp-accent);
   color: #fff !important;
   font-weight: 700;
+}
+
+/* NEW: Desired Vote Highlight */
+.sp-vote-desired {
+  border-color: var(--sp-accent);
+  background: var(--sp-accent-soft);
+  color: var(--sp-text);
+  font-weight: 500; 
 }
 
 .sp-votes-summary, 
@@ -334,7 +338,8 @@ body.sp-dragging {
 .sp-text-primary {
   font-weight: 600;
   font-size: 13px;
-  white-space: normal; 
+  white-space: normal; /* Allow Wrap */
+  max-width: 100%;
   line-height: 1.1;
   text-align: center;
   color: var(--sp-text);
@@ -344,29 +349,33 @@ body.sp-dragging {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0; 
-  width: 100%; 
-  height: 100%; 
-  padding: 0;
+  gap: 0;
+  font-size: 14px;
 }
-
 .sp-special-title {
-  font-weight: 600; 
+  font-weight: 600;
   color: var(--sp-text);
-  text-transform: none;
+  text-transform: none; /* Removed uppercase */
   letter-spacing: 0;
   font-size: 13px;
-  white-space: normal;
   text-align: center;
+  white-space: normal;
   line-height: 1.1;
+}
+.sp-special-sep {
+  opacity: 0.4;
+}
+.sp-special-subtitle {
+  font-weight: 400;
+  color: var(--sp-text-soft);
 }
 
 
-/* CONTROL ZONE */
+/* === CONTROL ZONE === */
 .sp-zone-control {
   align-items: flex-end;
   justify-content: center;
-  padding-left: 4px;
+  padding-left: 4px; /* TIGHTENED: Reduced from 12px */
 }
 .sp-ctrl-link {
   background: none;
@@ -471,4 +480,289 @@ body.sp-dragging {
 .sp-search-input::placeholder {
   font-style: italic;
   opacity: 0.7;
+}
+
+/* === SETTINGS MODAL === */
+/* ... (Settings modal styles included here or in separate file) ... */
+/* NOTE: If you are not using settings.css, keep the settings styles here. */
+.sp-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000001;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.75);
+  align-items: flex-end; 
+}
+
+.sp-settings-backdrop.sp-settings-open {
+  display: flex;
+}
+
+.sp-settings-modal {
+  min-width: 280px;
+  max-width: 380px;
+  padding: 16px 20px 16px;
+  border-radius: 12px;
+  background: var(--sp-bg-elevated);
+  border: 1px solid var(--sp-border);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(15,23,42,0.8);
+  color: var(--sp-text);
+  font-size: 13px;
+  margin-bottom: 96px; 
+}
+
+.sp-settings-header {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+}
+
+.sp-settings-header-logo {
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  display: block;
+}
+
+.sp-settings-title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.sp-settings-version {
+  font-size: 11px;
+  color: var(--sp-text-soft);
+}
+
+.sp-settings-body {
+  margin-bottom: 10px;
+}
+
+.sp-settings-section {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(148,163,184,0.5);
+  margin-bottom: 10px;
+  text-align: center; 
+}
+
+.sp-settings-section-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+/* Section Toggle Button */
+.sp-settings-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 6px;
+  min-height: 20px; 
+}
+
+.sp-settings-section-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  height: 20px;
+  background: transparent;
+  border: 1px solid var(--sp-border);
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 0 8px;
+  cursor: pointer;
+  color: var(--sp-text-soft);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.sp-settings-section-toggle:hover {
+  color: var(--sp-accent);
+  border-color: var(--sp-accent);
+}
+.sp-settings-section-toggle.sp-attention {
+  color: var(--sp-accent);
+  border-color: var(--sp-accent);
+  font-weight: 700;
+}
+
+.sp-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0;
+  gap: 12px;
+  width: 100%;
+}
+
+.sp-settings-center-block {
+  display: flex;
+  flex-direction: column;
+  width: 320px; 
+  margin: 0 auto;
+}
+
+.sp-settings-row-label {
+  font-size: 12px;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.sp-settings-row-value {
+  font-size: 12px;
+  text-align: right;
+  flex: 1;
+}
+
+.sp-settings-col {
+  display: flex;
+  flex-direction: column;
+  margin: 6px 0;
+  width: 100%;
+}
+
+.sp-settings-label-block {
+  font-size: 12px;
+  color: var(--sp-text-soft);
+  margin-bottom: 4px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.sp-settings-input-group {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.sp-settings-select {
+  background: var(--sp-bg);
+  color: var(--sp-text);
+  border: 1px solid var(--sp-border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  width: 120px; 
+  cursor: pointer;
+  text-align: right; 
+}
+
+.sp-settings-label {
+  font-size: 13px;
+}
+
+.sp-settings-stat-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.sp-settings-link {
+  font-size: 12px;
+  color: var(--sp-accent);
+  text-decoration: none;
+}
+
+.sp-settings-link:hover {
+  text-decoration: underline;
+}
+
+.sp-settings-footer {
+  display: flex;
+  justify-content: center; 
+  margin-top: 12px;
+}
+
+.sp-settings-close-btn {
+  border-radius: 999px;
+  border: 1px solid var(--sp-border);
+  background: transparent;
+  color: var(--sp-text);
+  padding: 4px 24px;
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.sp-settings-close-btn:hover {
+  border-color: var(--sp-accent);
+  color: var(--sp-accent);
+}
+
+.sp-settings-restore-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--sp-border);
+  background: rgba(15,23,42,0.4);
+  flex: 1;
+  word-break: break-all;
+  text-align: left;
+}
+
+.sp-settings-restore-copy,
+.sp-settings-restore-button {
+  border-radius: 6px;
+  border: 1px solid var(--sp-border);
+  background: transparent;
+  color: var(--sp-text);
+  padding: 0 10px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sp-settings-restore-copy:hover,
+.sp-settings-restore-button:hover {
+  border-color: var(--sp-accent);
+  color: var(--sp-accent);
+}
+
+.sp-settings-restore-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--sp-border);
+  background: rgba(15,23,42,0.3);
+  font-size: 12px;
+  color: var(--sp-text);
+}
+
+.sp-settings-restore-input::placeholder {
+  color: var(--sp-text-soft);
+}
+
+.sp-settings-restore-ack {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Right Aligned Checkbox */
+  gap: 8px;
+  margin-top: 0;
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.sp-settings-warning {
+  font-size: 10px;
+  color: #ef4444; 
+  margin-top: 4px;
+  text-align: left;
+  width: 100%;
+  font-weight: 500;
+  display: none;
 }
