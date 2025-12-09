@@ -136,9 +136,10 @@
   min-height: 44px;
 }
 
-/* separators - UPDATED: Exclude Votes and Control zones to fix spacing gap */
+/* separators */
+/* Exclude Votes and Control zones to fix spacing gap */
 .sp-zone + .sp-zone:not(.sp-zone-ads):not(.sp-zone-stats):not(.sp-zone-votes):not(.sp-zone-control) {
-  border-left: none; 
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
   height: 32px;
   margin-left: 4px;
   padding-left: 12px;
@@ -268,7 +269,7 @@ body.sp-dragging {
   flex: 0 0 160px;
   width: 160px;
   justify-content: center;
-  padding: 0 16px; /* CHANGED: Increased from 4px to keep text inside the curves */
+  padding: 0 16px; /* Increased to 16px to protect text edges */
   margin: 0 2px;
   
   /* The Oval "Pill" Look with Bluish Tint */
