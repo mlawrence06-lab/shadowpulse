@@ -73,14 +73,36 @@ export async function fetchBitcoinStats() {
 }
 
 export async function fetchVoteSummary(voteContext) {
-  // Summary placeholder
-  return {
-    topic_score: 0,
-    post_score: 0,
-    vote_count: 0,
-    rank: 0,
-    currentVote: null
-  };
+  if (!SP_CONFIG.GET_VOTE_API || SP_CONFIG.GET_VOTE_API === "***") {
+    // Original placeholder fallback
+    return {
+      topic_score: 0,
+      post_score: 0,
+      vote_count: 0,
+      rank: 0,
+      currentVote: null
+    };
+  }
+
+  try {
+    const memberUuid = await getOrCreateMemberUuid();
+    
+    // Construct the URL to get_vote.php
+    const url = new URL(SP_CONFIG.GET_VOTE_API);
+    url.searchParams.append("member_uuid", memberUuid);
+    url.searchParams.append("vote_category", voteContext.voteCategory || "topic");
+    url.searchParams.append("target_id", voteContext.targetId || 0);
+    url.searchParams.append("t", Date.now()); // Cache buster
+
+    const res = await fetch(url.toString());
+    if (!res.ok) return null;
+    
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    spLog("fetchVoteSummary error", err);
+    return null;
+  }
 }
 
 export async function submitVote(value, voteContext) {
@@ -188,12 +210,18 @@ export async function restoreMember(restoreCode) {
     return null;
   }
 
+  // CRITICAL FIX: Get the CURRENT temporary UUID so we can tell the server to delete it
+  const currentUuid = await getOrCreateMemberUuid();
+
   const res = await fetch(SP_CONFIG.MEMBER_RESTORE_API, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ restore_code: restoreCode })
+    body: JSON.stringify({ 
+        restore_code: restoreCode,
+        discard_uuid: currentUuid // <-- THIS IS THE NEW FIELD
+    })
   });
 
   if (!res.ok) {
@@ -333,9 +361,7 @@ export async function fetchEffectiveVote(voteContext) {
   } catch (e) { return null; }
 }
 
-// ... existing imports ...
 
-// Add this function:
 export async function savePreferences(prefs) {
   if (!SP_CONFIG.UPDATE_PREFS_API || SP_CONFIG.UPDATE_PREFS_API === "***") return;
 
