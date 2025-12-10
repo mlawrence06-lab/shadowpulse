@@ -126,32 +126,21 @@ function buildToolbar(root, voteContext) {
   let voteButtons = [];
   let votesSummary = null;
 
-  const createdVotes = createVotesZone(
-    canVote
-      ? async (desiredValue) => { // Parameter is now desiredValue
-          const result = await submitVote(desiredValue, voteContext);
-          
-          const effectiveValue =
-            result && typeof result.effectiveValue === "number"
-              ? result.effectiveValue
-              : desiredValue; // Use desiredValue as fallback if server response is bad
-
-          if (voteButtons && voteButtons.length) {
-            // MODIFIED: Pass both effective and desired values
-            setSelected(voteButtons, Number(effectiveValue), desiredValue);
-          }
-
-          renderVoteSummary(votesSummary, result, voteContext);
-
-          const storageKey = (voteContext && voteContext.storageKey) || "currentVote";
-          await setState(storageKey, effectiveValue);
-          
-          // Note: Rank is not available in submitVote mock, so pass null
-          updateLogoVisual(root, header, effectiveValue, null); 
-        }
-      : null,
-    voteContext
-  );
+const createdVotes = createVotesZone( // FIX: Uses function name directly
+  canVote
+    ? async (desiredValue) => {
+        // 1. Submit the vote (sends to server, but the button is already highlighted by ui/votes.js)
+        await submitVote(desiredValue, voteContext);
+        
+        // 2. CRITICAL FIX: Force a full re-hydration from the server.
+        // This fetches the CORRECT global average (for the logo) 
+        // and the CORRECT total count (for the info zone text).
+        await hydrateVoteAndLogo(root, header, voteContext);
+        
+      }
+    : null,
+  voteContext
+);
 
   votesZone = createdVotes.zone;
   voteButtons = createdVotes.buttons;
@@ -293,13 +282,27 @@ async function hydrateStats(header) {
   }
 }
 
-// New combined vote/logo/summary hydration function for ASAP and Periodic
+
+// Helper: Format number with commas (e.g. 1,677)
+function formatNumber(num) {
+  return Number(num).toLocaleString();
+}
+
+// Helper: Get ordinal suffix (e.g. 5th, 1st, 2nd)
+function getOrdinal(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// scripts/main.js - Replacing hydrateVoteAndLogo
+
 async function hydrateVoteAndLogo(root, header, voteContext) {
   try {
     const refs = header._spRefs || {};
     const ctx = voteContext || refs.voteContext || null;
 
-    // 1. Highlight SETTINGS if restore code has not been acknowledged (ASAP)
+    // 1. Settings Link Attention
     const restoreAck = await getState("memberRestoreAck", false);
     const settingsLink = root.querySelector(".sp-ctrl-settings");
     if (settingsLink) {
@@ -309,49 +312,60 @@ async function hydrateVoteAndLogo(root, header, voteContext) {
           settingsLink.classList.remove("sp-attention");
         }
     }
-
-    // Only run if we have a vote context (i.e., topic/post)
+    
     if (!ctx || !ctx.canVote) {
-        // Still remove loading class for non-voting pages to make the special zone visible
         if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
         return;
     }
 
-    let initialValue = null;
+    // --- DECOUPLE VALUES ---
+    let logoGlobalScore = 0;   // Logo uses Global Score
+    let myPersonalVote = null; // Buttons use Personal Vote
     let initialRank = null;
 
-    // Fetch vote summary for logo rank/score and vote buttons (ASAP / PERIODIC)
     const summary = await fetchVoteSummary(ctx);
 
     if (summary) {
-        if (summary.currentVote != null) {
-            initialValue = Number(summary.currentVote);
+        // a. Global Score/Count for Logo and Summary Text
+        if (summary.topic_score != null) {
+            logoGlobalScore = Number(summary.topic_score);
         }
+        
+        // b. Personal Vote for Button Highlight
+        if (summary.currentVote != null) {
+            myPersonalVote = Number(summary.currentVote);
+        }
+        
+        // c. Rank (Global Rank)
         if (summary.rank != null) {
             initialRank = Number(summary.rank);
         }
 
-        if (initialValue != null && refs.voteButtons && refs.voteButtons.length) {
-            // MODIFIED: Only pass the effective value for hydration. Desired is null.
-            setSelected(refs.voteButtons, initialValue, null); 
+        // --- 3. APPLY PERSONAL VOTE TO BUTTONS (CRITICAL FIX) ---
+        // Uses the directly imported setSelected function
+        const buttons = refs.voteButtons;
+        if (buttons && buttons.length) {
+            setSelected(buttons, myPersonalVote, null); 
         }
 
-        // Render vote summary text (only runs if not minimized)
+        // --- 4. RENDER GLOBAL COUNT/SUMMARY TEXT (CRITICAL FIX) ---
         if (!root.classList.contains("sp-root-minimized")) {
-            renderVoteSummary(refs.votesSummary, summary, ctx);
-            // ASAP: Make votes zone visible
+            const summaryEl = refs.votesSummary;
+            if (summaryEl) {
+                // Uses the directly imported renderVoteSummary function
+                renderVoteSummary(summaryEl, summary, ctx);
+            }
             if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
         }
     } 
 
-    // Update Logo (ASAP / PERIODIC)
-    updateLogoVisual(root, header, initialValue || 0, initialRank || null);
+    // Update Logo (Use Global Score/Rank)
+    updateLogoVisual(root, header, logoGlobalScore || 0, initialRank || null);
     
   } catch (err) {
     spError("hydrateVoteAndLogo error", err);
   }
 }
-
 
 async function applyMinimizedState(root, minimized) {
   if (minimized) {
@@ -415,15 +429,34 @@ async function applyMinimizedState(root, minimized) {
     const { panel: searchPanel, input: searchInput } = attachSearch(root, header);
         
     // Kick off member bootstrap in the background
-    (async () => {
+(async () => {
+      // CRITICAL FIX: Get previous ID before checking server
+      const previousId = await getState("memberId", 0); 
+      
       const memberUuid = await getOrCreateMemberUuid();
       spLog("ShadowPulse build", SP_CONFIG.VERSION);
       spLog("ShadowPulse member UUID", memberUuid);
       try {
         trackPageView(memberUuid);
         const info = await bootstrapMember(memberUuid);
+        
         if (info && info.member_id != null) {
           const numericId = Number(info.member_id) || 0;
+          
+          // Identity Change Detection (e.g., switched from temp ID to restored ID)
+          if (numericId > 0 && previousId > 0 && numericId !== previousId) {
+              spLog(`Identity Change Detected (${previousId} -> ${numericId}). Wiping local storage.`);
+              
+              // WIPE STORAGE and force reload to ensure a clean start
+              await new Promise(r => chrome.storage.local.clear(r));
+              
+              await setState("memberUuid", info.member_uuid || memberUuid);
+              await setState("memberId", numericId);
+              await setState("memberRestoreAck", !!info.restore_ack);
+              window.location.reload(); 
+              return;
+          }
+
           if (numericId > 0) {
             await setState("memberId", numericId);
             await setState("memberUuid", info.member_uuid || memberUuid);

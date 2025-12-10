@@ -416,26 +416,32 @@ function applyMemberIdentity(backdrop, memberId, memberUuid, restoreAck) {
       if (!code) return;
       try {
         const info = await restoreMember(code);
-        if (info && info.member_uuid) {
-          // 1. Restore Identity
-          await setMemberUuid(info.member_uuid);
-          await setState("memberUuid", info.member_uuid);
-          await setState("memberId", info.member_id || 0);
-          
-          // 2. Restore Preferences (Sync)
-          if (info.prefs) {
-            if (info.prefs.theme) await setState("theme", info.prefs.theme);
-            if (info.prefs.search) await setState("searchEngine", info.prefs.search);
-            if (info.prefs.btc_source) await setState("btcSource", info.prefs.btc_source);
-          }
+if (info && info.member_uuid) {
+    // 1. WIPE LOCAL STORAGE (Removes ghost votes & old cache)
+    await new Promise((resolve) => {
+        chrome.storage.local.clear(() => resolve());
+    });
+    
+    // 2. Restore Identity (Saves to the now-empty storage)
+    await setMemberUuid(info.member_uuid);
+    await setState("memberUuid", info.member_uuid);
+    await setState("memberId", info.member_id || 0);
+    
+    // 3. Restore Preferences (Sync)
+    if (info.prefs) {
+      if (info.prefs.theme) await setState("theme", info.prefs.theme);
+      if (info.prefs.search) await setState("searchEngine", info.prefs.search);
+      if (info.prefs.btc_source) await setState("btcSource", info.prefs.btc_source);
+    }
 
-          // 3. Mark as Saved (Ack)
-          await setState("memberRestoreAck", true);
-          try { await updateRestoreAck(info.member_uuid, true); } catch (_) {}
-          
-          // 4. Reload to apply
-          window.location.reload();
-        }
+    // 4. Mark as Saved (Ack)
+    await setState("memberRestoreAck", true);
+    try { await updateRestoreAck(info.member_uuid, true); } catch (_) {}
+    
+    // 5. Reload to apply clean state
+    window.location.reload();
+    }
+
       } catch (err) {
         console.error("[ShadowPulse] restoreMember failed", err);
       }
