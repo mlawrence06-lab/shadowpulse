@@ -21,7 +21,7 @@ export const SP_CONFIG = {
   
   GET_STATS_API: "https://vod.fan/shadowpulse/get_stats.php",   
   GET_VOTE_API: "https://vod.fan/shadowpulse/get_vote.php",
-  VOTE_API: "https://vod.fan/shadowpulse/vote.php",
+  VOTE_API: "https://vod.fan/shadowpulse/cast_vote.php",
   MEMBER_BOOTSTRAP_API: "https://vod.fan/shadowpulse/bootstrap_member.php",
   MEMBER_RESTORE_API: "https://vod.fan/shadowpulse/restore_member.php",
   MEMBER_UPDATE_ACK_API: "https://vod.fan/shadowpulse/update_restore_ack.php",

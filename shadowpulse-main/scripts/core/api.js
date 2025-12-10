@@ -9,6 +9,7 @@
 import { SP_CONFIG } from "./config.js";
 import { spLog } from "./utils.js";
 import { getOrCreateMemberUuid } from "./member.js";
+import { getState } from "./state.js";
 
 
 // Simple retry helper for transient network/database outages.
@@ -83,37 +84,32 @@ export async function fetchVoteSummary(voteContext) {
 }
 
 export async function submitVote(value, voteContext) {
-  // If the vote API is not configured, keep existing behaviour (local-only).
+  // 1. Check if API is configured
   if (!SP_CONFIG.VOTE_API || SP_CONFIG.VOTE_API === "***") {
-    spLog(
-      "submitVote() placeholder. VOTE_API =",
-      SP_CONFIG.VOTE_API,
-      "value =",
-      value
-    );
-    // Return mock data so UI updates immediately
-    // Simulating: 1 vote cast, ranked 5th
-    return { 
-      ok: true, 
-      effectiveValue: value, 
-      vote_count: 1, 
-      rank: 5, 
-      raw: null 
-    };
+    spLog("submitVote() placeholder. VOTE_API not configured.");
+    // Mock response for local testing
+    return { ok: true, effectiveValue: value, vote_count: 1, rank: 5, raw: null };
   }
 
   try {
-    const memberUuid = await getOrCreateMemberUuid();
+    // 2. Retrieve the Integer Member ID from storage
+    // (This was saved during bootstrap in main.js)
+    const memberId = await getState("memberId", 0);
 
+    if (!memberId) {
+      console.warn("[ShadowPulse] Cannot vote: Member ID not found. (Bootstrap failed?)");
+      return { ok: false, effectiveValue: value, raw: null };
+    }
+
+    // 3. Construct Payload for cast_vote.php
     const payload = {
-      member_uuid: memberUuid,
+      member_id: Number(memberId), // Send Integer
       vote_category: voteContext && voteContext.voteCategory ? voteContext.voteCategory : "topic",
-      target_id: voteContext && typeof voteContext.targetId === "number"
-        ? voteContext.targetId
-        : 0,
-      desired_value: value
+      target_id: voteContext && typeof voteContext.targetId === "number" ? voteContext.targetId : 0,
+      desired_value: Number(value)
     };
 
+    // 4. Send Request
     const res = await fetch(SP_CONFIG.VOTE_API, {
       method: "POST",
       headers: {
@@ -127,21 +123,27 @@ export async function submitVote(value, voteContext) {
       return { ok: false, effectiveValue: value, raw: null };
     }
 
-    const data = await res.json();
-    const effectiveValue =
-      data && typeof data.effective_value === "number" ? data.effective_value : value;
+    const json = await res.json();
 
-    // OPTIMISTIC UI: If server didn't send count, assume at least 1 (the user's vote)
-    const serverCount = (data && typeof data.vote_count === 'number') ? data.vote_count : 0;
-    const finalCount = serverCount > 0 ? serverCount : 1;
+    // 5. Parse Response (New Structure: { ok: true, data: { effective_value: X } })
+    let effectiveValue = value;
+    
+    if (json.ok && json.data && typeof json.data.effective_value === "number") {
+      effectiveValue = json.data.effective_value;
+    } else {
+      // Fallback if response structure is unexpected
+      effectiveValue = value;
+    }
 
+    // Optimistic Count/Rank (Server doesn't send total count in cast_vote yet, so we mock 1)
     return {
-      ok: data && data.ok !== false,
-      effectiveValue,
-      vote_count: finalCount,
-      rank: (data && data.rank) || 0,
-      raw: data
+      ok: json.ok === true,
+      effectiveValue: effectiveValue,
+      vote_count: 1, // Placeholder until get_vote refreshes the total
+      rank: 0,       // Placeholder
+      raw: json
     };
+
   } catch (err) {
     spLog("submitVote() error", err && err.message ? err.message : err);
     return { ok: false, effectiveValue: value, raw: null };
