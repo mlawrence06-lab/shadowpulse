@@ -226,7 +226,7 @@ export function parseBitcointalkPage(urlString) {
     // kind: "home", "board", "topic", "post", "profile", "special", "unknown"
     kind: "unknown",
     voteCategory: null,
-    
+
     // Ids
     boardId: null,
     topicId: null,
@@ -238,7 +238,7 @@ export function parseBitcointalkPage(urlString) {
     // Display Info
     pageTitle: "",
     pageSubtitle: "",
-    
+
     // Flags
     canVote: false // Default to false
   };
@@ -309,6 +309,14 @@ export function parseBitcointalkPage(urlString) {
       return ctx;
     }
 
+    if (action === "trust") {
+      const uRaw = params.get("u");
+      ctx.kind = "special";
+      ctx.pageTitle = uRaw ? "Trust Summary" : "Modify Trust List";
+      ctx.pageSubtitle = "";
+      return ctx;
+    }
+
     if (action === "profile") {
       // Profile variants
       const uRaw = params.get("u");
@@ -324,7 +332,7 @@ export function parseBitcointalkPage(urlString) {
         ctx.userId = userId;
         ctx.voteCategory = "profile";
         ctx.targetId = userId;
-        
+
         // Handle specific profile sub-actions
         if (sa === "summary" || !sa) {
           // Standard profile view
@@ -359,21 +367,21 @@ export function parseBitcointalkPage(urlString) {
   }
 
   // --- 4. BOARD / TOPIC / POST (index.php?...) ---
-  
+
   // Board: board=9 or board=9.0
   if (params.has("board")) {
     const boardRaw = params.get("board");
     const boardId = parseLeadingInt(boardRaw);
-    
+
     ctx.kind = "board";
     ctx.boardId = boardId;
     ctx.voteCategory = "board";
     ctx.targetId = boardId;
-    
+
     // Resolve Board Name
     ctx.pageTitle = BOARD_NAMES[boardId] || "Board " + boardId;
     ctx.pageSubtitle = ""; // Rank Stub
-    
+
     return ctx;
   }
 
@@ -401,15 +409,15 @@ export function parseBitcointalkPage(urlString) {
       ctx.targetId = topicId;
       ctx.pageTitle = "Topic";
     }
-    
+
     // Stable storage key for local voting
     if (ctx.targetId != null) {
       ctx.storageKey = `vote:${ctx.voteCategory}:${ctx.targetId}`;
     }
-    
+
     // ENABLE VOTING!
     ctx.canVote = true;
-    
+
     return ctx;
   }
 
@@ -417,6 +425,6 @@ export function parseBitcointalkPage(urlString) {
   ctx.kind = "special";
   ctx.pageTitle = "Unknown Page";
   ctx.pageSubtitle = "";
-  
+
   return ctx;
 }
