@@ -28,8 +28,8 @@ if (!$input || !isset($input['member_uuid']) || !array_key_exists('restore_ack',
     exit;
 }
 
-$memberUuid = trim((string)$input['member_uuid']);
-$restoreAck = (bool)$input['restore_ack'];
+$memberUuid = trim((string) $input['member_uuid']);
+$restoreAck = (bool) $input['restore_ack'];
 
 if ($memberUuid === '' || strlen($memberUuid) > 64) {
     http_response_code(400);
@@ -37,14 +37,14 @@ if ($memberUuid === '' || strlen($memberUuid) > 64) {
     exit;
 }
 
-require __DIR__ . '/db.php';
+require __DIR__ . '/../../config/db.php';
 
 try {
     $pdo = sp_get_pdo();
 
     $stmt = $pdo->prepare('UPDATE members SET restore_ack = :ack WHERE member_uuid = :uuid');
     $stmt->execute([
-        ':ack'  => $restoreAck ? 1 : 0,
+        ':ack' => $restoreAck ? 1 : 0,
         ':uuid' => $memberUuid,
     ]);
 

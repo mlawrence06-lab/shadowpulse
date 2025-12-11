@@ -19,17 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    if (!file_exists('db.php')) {
+    if (!file_exists(__DIR__ . '/../../config/db.php')) {
         throw new Exception("db.php not found.");
     }
-    require_once 'db.php';
+    require_once __DIR__ . '/../../config/db.php';
     $pdo = sp_get_pdo();
 
     // Get Input
     $input = json_decode(file_get_contents('php://input'), true);
     $uuid = $input['member_uuid'] ?? null;
     $term = trim($input['search_term'] ?? '');
-    $engine = (int)($input['engine_id'] ?? 1);
+    $engine = (int) ($input['engine_id'] ?? 1);
 
     if (!$uuid || $term === '') {
         // Silently fail for empty searches or missing users

@@ -2,7 +2,7 @@
 // cron_btc_ticker.php
 
 // 1. Include your existing database connection helper
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/../../config/db.php';
 
 // 2. Configuration
 $symbol = 'BTCUSDT';
@@ -56,11 +56,11 @@ try {
     $candle = $data[0];
 
     $timestampMs = $candle[0];
-    $open        = $candle[1];
-    $high        = $candle[2];
-    $low         = $candle[3];
-    $close       = $candle[4];
-    $volume      = $candle[5];
+    $open = $candle[1];
+    $high = $candle[2];
+    $low = $candle[3];
+    $close = $candle[4];
+    $volume = $candle[5];
 
     // Convert Binance timestamp (ms) to MySQL datetime format
     $candleTime = date('Y-m-d H:i:s', $timestampMs / 1000);
@@ -74,13 +74,13 @@ try {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':symbol'      => $symbol,
+        ':symbol' => $symbol,
         ':candle_time' => $candleTime,
-        ':open'        => $open,
-        ':high'        => $high,
-        ':low'         => $low,
-        ':close'       => $close,
-        ':volume'      => $volume,
+        ':open' => $open,
+        ':high' => $high,
+        ':low' => $low,
+        ':close' => $close,
+        ':volume' => $volume,
     ]);
 
     // Optional: Output for testing (if running manually)

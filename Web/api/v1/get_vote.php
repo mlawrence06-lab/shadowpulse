@@ -2,16 +2,16 @@
 require __DIR__ . '/cors.php';
 header('Content-Type: application/json');
 
-$memberUuid   = isset($_GET['member_uuid']) ? trim($_GET['member_uuid']) : '';
+$memberUuid = isset($_GET['member_uuid']) ? trim($_GET['member_uuid']) : '';
 $voteCategory = isset($_GET['vote_category']) ? trim($_GET['vote_category']) : '';
-$targetId     = isset($_GET['target_id']) ? (int)$_GET['target_id'] : 0;
+$targetId = isset($_GET['target_id']) ? (int) $_GET['target_id'] : 0;
 
 if ($memberUuid === '' || $targetId <= 0) {
     echo json_encode(['ok' => false, 'error' => 'missing fields']);
     exit;
 }
 
-require __DIR__ . '/db.php';
+require __DIR__ . '/../../config/db.php';
 
 try {
     $pdo = sp_get_pdo();
@@ -25,7 +25,7 @@ try {
         exit;
     }
 
-    $memberId = (int)$row['member_id'];
+    $memberId = (int) $row['member_id'];
 
     $stmt = $pdo->prepare("
         SELECT effective_value
@@ -37,7 +37,7 @@ try {
     ");
     $stmt->execute([
         ':member_id' => $memberId,
-        ':category'  => $voteCategory,
+        ':category' => $voteCategory,
         ':target_id' => $targetId
     ]);
 
@@ -48,8 +48,8 @@ try {
         exit;
     }
 
-    echo json_encode(['ok'=>true,'effective_value'=>(int)$row2['effective_value']]);
+    echo json_encode(['ok' => true, 'effective_value' => (int) $row2['effective_value']]);
 
 } catch (Throwable $e) {
-    echo json_encode(['ok'=>false,'error'=>$e->getMessage()]);
+    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
 }

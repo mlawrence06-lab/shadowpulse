@@ -9,16 +9,18 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
+    exit(0);
 
 try {
-    require_once 'db.php';
+    require_once __DIR__ . '/../../config/db.php';
     $pdo = sp_get_pdo();
 
     $input = json_decode(file_get_contents('php://input'), true);
     $uuid = $input['member_uuid'] ?? null;
-    
-    if (!$uuid) throw new Exception('Missing UUID');
+
+    if (!$uuid)
+        throw new Exception('Missing UUID');
 
     // Prepare fields to update
     $fields = [];

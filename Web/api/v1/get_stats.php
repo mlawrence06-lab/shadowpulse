@@ -18,10 +18,10 @@ $responsePayload = [];
 
 try {
     // 3. Load Dependencies
-    if (!file_exists(__DIR__ . '/db.php')) {
+    if (!file_exists(__DIR__ . '/../../config/db.php')) {
         throw new Exception("db.php not found");
     }
-    require_once __DIR__ . '/db.php';
+    require_once __DIR__ . '/../../config/db.php';
 
     if (!function_exists('sp_get_pdo')) {
         throw new Exception("sp_get_pdo missing");
@@ -54,15 +54,16 @@ try {
         ];
     } else {
         $first = reset($rows); // Price ~60 mins ago (in DB terms)
-        $last  = end($rows);   // Most recent price (in DB terms)
-        
-        $price = (float)$last['close_price'];
-        $start = (float)$first['close_price']; 
-        
+        $last = end($rows);   // Most recent price (in DB terms)
+
+        $price = (float) $last['close_price'];
+        $start = (float) $first['close_price'];
+
         // Trend calculation
         $trend = ($price >= $start) ? 'up' : 'down';
-        
-        $history = array_map(function($r) { return (float)$r['close_price']; }, $rows);
+
+        $history = array_map(function ($r) {
+            return (float) $r['close_price']; }, $rows);
 
         $responsePayload = [
             'price_val' => $price,

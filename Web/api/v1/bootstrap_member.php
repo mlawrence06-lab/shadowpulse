@@ -44,7 +44,7 @@ if (!preg_match('/^[0-9a-fA-F-]{8,36}$/', $memberUuid)) {
 
 // ---- DB CONNECTION ----
 // Uses your existing helper from db.php
-require __DIR__ . '/db.php';
+require __DIR__ . '/../../config/db.php';
 
 try {
     $pdo = sp_get_pdo();
@@ -73,10 +73,10 @@ try {
     }
 
     echo json_encode([
-        'member_id'    => (int)$row['member_id'],
-        'member_uuid'  => $row['member_uuid'],
-        'restore_ack'  => (bool)$row['restore_ack'],
-        'created_at'   => $row['created_at'],
+        'member_id' => (int) $row['member_id'],
+        'member_uuid' => $row['member_uuid'],
+        'restore_ack' => (bool) $row['restore_ack'],
+        'created_at' => $row['created_at'],
         'last_seen_at' => $row['last_seen_at'],
     ]);
 } catch (Throwable $e) {
@@ -84,8 +84,8 @@ try {
     error_log('bootstrap_member error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
-        'error'   => 'Server error',
+        'error' => 'Server error',
         'message' => $e->getMessage(),
-        'code'    => $e->getCode(),
+        'code' => $e->getCode(),
     ]);
 }

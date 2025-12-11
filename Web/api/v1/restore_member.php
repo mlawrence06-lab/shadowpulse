@@ -11,13 +11,14 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
+    exit(0);
 
 try {
-    if (!file_exists('db.php')) {
+    if (!file_exists(__DIR__ . '/../../config/db.php')) {
         throw new Exception("db.php not found.");
     }
-    require_once 'db.php';
+    require_once __DIR__ . '/../../config/db.php';
     $pdo = sp_get_pdo();
 
     $input = json_decode(file_get_contents('php://input'), true);
@@ -35,12 +36,12 @@ try {
     if ($member) {
         // Success! Return Identity + Preferences
         echo json_encode([
-            'member_id'   => (int)$member['member_id'],
+            'member_id' => (int) $member['member_id'],
             'member_uuid' => $member['member_uuid'],
-            'restore_ack' => (bool)$member['restore_ack'],
+            'restore_ack' => (bool) $member['restore_ack'],
             'prefs' => [
-                'theme'      => $member['pref_theme'] ?? 'light',
-                'search'     => $member['pref_search'] ?? 'bitlist',
+                'theme' => $member['pref_theme'] ?? 'light',
+                'search' => $member['pref_search'] ?? 'bitlist',
                 'btc_source' => $member['pref_btc_source'] ?? 'binance'
             ]
         ]);
