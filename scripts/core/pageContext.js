@@ -216,9 +216,13 @@ export function getVotingContext() {
 }
 
 export function parseBitcointalkPage(urlString) {
-  const url = new URL(urlString, window.location.origin);
-  const path = url.pathname || "/";
-  const params = url.searchParams;
+  // Fix: Bitcointalk uses semicolons; URLSearchParams expects ampersands.
+  // We strictly replace ; with & in the search portion only.
+  const rawUrl = new URL(urlString, window.location.origin);
+  const searchFixed = rawUrl.search.replace(/;/g, "&");
+  const params = new URLSearchParams(searchFixed);
+
+  const path = rawUrl.pathname || "/";
   const action = (params.get("action") || "").toLowerCase();
   const sa = (params.get("sa") || "").toLowerCase();
 
