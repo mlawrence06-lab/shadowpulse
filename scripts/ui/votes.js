@@ -18,6 +18,11 @@ export function createVotesZone(onVoteSelected, voteContext) {
   const zone = createEl("div", ["sp-zone", "sp-zone-votes"]);
   const ctx = voteContext || { kind: "unknown" };
 
+  // FEATURE REMOVED: Post voting disabled due to API limitations
+  if (ctx.kind === 'post') {
+    return { zone: null, buttons: [], summaryEl: null };
+  }
+
   const buttons = [];
   let summaryEl = null;
 
@@ -39,7 +44,7 @@ export function createVotesZone(onVoteSelected, voteContext) {
           const value = Number(btn.dataset.value || "0");
           if (!value) return;
           // Set the currently desired value visually before the server responds
-          setSelected(buttons, null, value); 
+          setSelected(buttons, null, value);
           onVoteSelected(value);
         });
       }
@@ -51,16 +56,16 @@ export function createVotesZone(onVoteSelected, voteContext) {
     // BOTTOM ROW: Summary Text
     const bottomRow = createEl("div", ["sp-votes-row", "sp-votes-bottom"]);
     summaryEl = createEl("div", ["sp-votes-summary"]);
-    
+
     // Initial State
     const noun = (ctx.kind === 'post') ? 'Post' : 'Topic';
     summaryEl.textContent = `No ${noun} votes yet`;
-    
+
     bottomRow.appendChild(summaryEl);
     zone.appendChild(bottomRow);
 
-  } 
-  
+  }
+
   // --- MODE 2 & 3: INFO (Board / Profile) ---
   else if (ctx.kind === "board" || ctx.kind === "profile") {
     zone.classList.add("sp-votes-mode-info");
@@ -72,7 +77,7 @@ export function createVotesZone(onVoteSelected, voteContext) {
 
     // BOTTOM ROW: Rank Stub
     const bottomRow = createEl("div", ["sp-votes-row", "sp-votes-bottom", "sp-text-secondary"]);
-    bottomRow.textContent = "Ranked xth"; 
+    bottomRow.textContent = "Ranked xth";
     zone.appendChild(bottomRow);
   }
 
@@ -106,10 +111,10 @@ export function createVotesZone(onVoteSelected, voteContext) {
  */
 export function setSelected(buttons, effectiveValue, desiredValue = null) {
   if (!buttons || !buttons.length) return;
-  
+
   buttons.forEach((btn) => {
     const v = Number(btn.dataset.value || "0");
-    
+
     // Remove all classes first
     btn.classList.remove("sp-vote-selected", "sp-vote-desired");
     btn.removeAttribute('title'); // Clear existing tooltip
@@ -122,7 +127,7 @@ export function setSelected(buttons, effectiveValue, desiredValue = null) {
       // 2. If it is the desired vote, but not yet the effective vote, apply the weaker highlight
       btn.classList.add("sp-vote-desired");
       btn.title = "Desired vote"; // Add tooltip for desired vote
-    } 
+    }
   });
 }
 
@@ -141,7 +146,7 @@ function getOrdinal(n) {
 // Update summary text: "1,677 votes (Ranked 5th)"
 export function renderVoteSummary(summaryEl, payload, voteContext) {
   if (!summaryEl) return;
-  
+
   const ctx = voteContext || {};
   const noun = (ctx.kind === 'post') ? 'Post' : 'Topic';
   const defaultText = `No ${noun} votes yet`;
@@ -157,7 +162,7 @@ export function renderVoteSummary(summaryEl, payload, voteContext) {
   if (count > 0) {
     // GRAMMAR FIX: "vote" vs "votes"
     const suffix = count === 1 ? "vote" : "votes";
-    
+
     let text = `${formatNumber(count)} ${suffix}`;
     if (rank > 0) {
       text += ` (Ranked ${getOrdinal(rank)})`;

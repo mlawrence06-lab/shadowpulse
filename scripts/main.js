@@ -43,23 +43,23 @@ function updateLogoVisual(root, header, numeric, rank = null) {
   if (!logoCircle) return;
 
   const value = Number(numeric) || 0;
-  
+
   // Define a small epsilon for robust floating-point comparisons to 3.0
-  const EPSILON = 0.0001; 
-  
+  const EPSILON = 0.0001;
+
   // 1. New Color Logic: 
   // - Green (>3)
   // - Red (<3 but >0)
   // - Blue (Everything else: 0 or ~3)
-  let colorKey = "blue"; 
+  let colorKey = "blue";
 
   if (value > (3 + EPSILON)) {
-      colorKey = "green"; // Score > 3
+    colorKey = "green"; // Score > 3
   } else if (value > EPSILON && value < (3 - EPSILON)) {
-      colorKey = "red";   // Score between 0 and 3
-  } 
+    colorKey = "red";   // Score between 0 and 3
+  }
   // Otherwise, remains blue (default)
-  
+
   logoCircle.removeAttribute('data-vote-color');
   logoCircle.dataset.voteColor = colorKey;
 
@@ -77,18 +77,18 @@ function updateLogoVisual(root, header, numeric, rank = null) {
     logoText.style.color = "#f9fafb";
     logoText.style.webkitTextStroke = isDark ? "1px #000" : "1px #fff";
   }
-  
+
   // 3. Tooltip (Ranked xth (Score: X.X))
   let tooltip = "ShadowPulse";
   if (rank && rank > 0) {
-      tooltip = `Ranked ${rank}${getOrdinalSuffix(rank)}`; 
-      if (value > 0) {
-        tooltip += ` (Score: ${value.toFixed(1)})`;
-      } else {
-        tooltip += ` (Score: ---)`;
-      }
-  } else if (value > 0) {
+    tooltip = `Ranked ${rank}${getOrdinalSuffix(rank)}`;
+    if (value > 0) {
       tooltip += ` (Score: ${value.toFixed(1)})`;
+    } else {
+      tooltip += ` (Score: ---)`;
+    }
+  } else if (value > 0) {
+    tooltip += ` (Score: ${value.toFixed(1)})`;
   }
   logoCircle.title = tooltip;
 }
@@ -109,7 +109,7 @@ function buildToolbar(root, voteContext) {
   const header = createEl("div", ["sp-toolbar"]);
 
   // 1) logo (IMMEDIATE)
-  const logoZone = createLogoZone(() => {}, root);
+  const logoZone = createLogoZone(() => { }, root);
 
   // 2) ads (HIDDEN by default, made visible in hydrateAds)
   const { zone: adsZone, link: adsLink, img: adsImg } = createAdsZone();
@@ -119,34 +119,34 @@ function buildToolbar(root, voteContext) {
   // NOTE: The default "Loading..." text is assumed to be handled in scripts/ui/stats.js
   const { zone: statsZone, priceEl, graphEl } = createStatsZone();
   statsZone.classList.add("sp-zone-loading");
-  
+
   // 4) votes (HIDDEN by default, made visible in hydrateVoteAndLogo)
   const canVote = voteContext && voteContext.canVote;
   let votesZone;
   let voteButtons = [];
   let votesSummary = null;
 
-const createdVotes = createVotesZone( // FIX: Uses function name directly
-  canVote
-    ? async (desiredValue) => {
+  const createdVotes = createVotesZone( // FIX: Uses function name directly
+    canVote
+      ? async (desiredValue) => {
         // 1. Submit the vote (sends to server, but the button is already highlighted by ui/votes.js)
         await submitVote(desiredValue, voteContext);
-        
+
         // 2. CRITICAL FIX: Force a full re-hydration from the server.
         // This fetches the CORRECT global average (for the logo) 
         // and the CORRECT total count (for the info zone text).
         await hydrateVoteAndLogo(root, header, voteContext);
-        
+
       }
-    : null,
-  voteContext
-);
+      : null,
+    voteContext
+  );
 
   votesZone = createdVotes.zone;
   voteButtons = createdVotes.buttons;
   votesSummary = createdVotes.summaryEl;
   if (canVote) {
-      votesZone.classList.add("sp-zone-loading");
+    votesZone.classList.add("sp-zone-loading");
   }
 
 
@@ -155,23 +155,23 @@ const createdVotes = createVotesZone( // FIX: Uses function name directly
     onMinimize: () => {
       const nowMin = !root.classList.contains("sp-root-minimized");
       applyMinimizedState(root, nowMin);
-      
+
       // When minimized/restored, immediately re-run load/update
       if (!nowMin) {
-          // Trigger ASAP load/refresh when restoring from minimize
-          hydrateAds(header);
-          hydrateVoteAndLogo(root, header, voteContext); 
-          
-          // Trigger Stats data refresh
-          const isMinimized = root.classList.contains("sp-root-minimized");
-          if (!isMinimized) {
-              hydrateStats(header);
-          }
+        // Trigger ASAP load/refresh when restoring from minimize
+        hydrateAds(header);
+        hydrateVoteAndLogo(root, header, voteContext);
+
+        // Trigger Stats data refresh
+        const isMinimized = root.classList.contains("sp-root-minimized");
+        if (!isMinimized) {
+          hydrateStats(header);
+        }
       } else {
-          // If minimized, check effective vote for logo update
-          fetchEffectiveVote(voteContext).then(ev => {
-              updateLogoVisual(root, header, ev || 0, null);
-          });
+        // If minimized, check effective vote for logo update
+        fetchEffectiveVote(voteContext).then(ev => {
+          updateLogoVisual(root, header, ev || 0, null);
+        });
       }
     },
     onAutoMin: async () => {
@@ -262,7 +262,7 @@ async function hydrateStats(header) {
 
     // Fetch bitcoin stats (API call, periodic only)
     const data = await fetchBitcoinStats();
-    
+
     // FIX: Render the stats regardless of whether data is null or valid.
     // If data is null, renderStats will set text to "Unavailable".
     renderStats(refs.statsPrice, refs.statsGraph, data);
@@ -276,8 +276,8 @@ async function hydrateStats(header) {
     // If hydrateStats itself throws an unexpected error (not likely for this function), 
     // display an error state.
     if (header._spRefs && header._spRefs.statsPrice) {
-        header._spRefs.statsPrice.textContent = "Err";
-        refs.statsZone.classList.remove("sp-zone-loading");
+      header._spRefs.statsPrice.textContent = "Err";
+      refs.statsZone.classList.remove("sp-zone-loading");
     }
   }
 }
@@ -306,62 +306,68 @@ async function hydrateVoteAndLogo(root, header, voteContext) {
     const restoreAck = await getState("memberRestoreAck", false);
     const settingsLink = root.querySelector(".sp-ctrl-settings");
     if (settingsLink) {
-        if (!restoreAck) {
-          settingsLink.classList.add("sp-attention");
-        } else {
-          settingsLink.classList.remove("sp-attention");
-        }
+      if (!restoreAck) {
+        settingsLink.classList.add("sp-attention");
+      } else {
+        settingsLink.classList.remove("sp-attention");
+      }
     }
-    
+
     if (!ctx || !ctx.canVote) {
-        if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
-        return;
+      if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
+      return;
     }
 
     // --- DECOUPLE VALUES ---
     let logoGlobalScore = 0;   // Logo uses Global Score
-    let myPersonalVote = null; // Buttons use Personal Vote
+    let myPersonalVote = null; // Buttons use Personal Vote (Effective)
+    let myDesiredVote = null;  // Buttons use Desired Vote (if different)
     let initialRank = null;
 
     const summary = await fetchVoteSummary(ctx);
 
     if (summary) {
-        // a. Global Score/Count for Logo and Summary Text
-        if (summary.topic_score != null) {
-            logoGlobalScore = Number(summary.topic_score);
-        }
-        
-        // b. Personal Vote for Button Highlight
-        if (summary.currentVote != null) {
-            myPersonalVote = Number(summary.currentVote);
-        }
-        
-        // c. Rank (Global Rank)
-        if (summary.rank != null) {
-            initialRank = Number(summary.rank);
-        }
+      // a. Global Score/Count for Logo and Summary Text
+      if (summary.topic_score != null) {
+        logoGlobalScore = Number(summary.topic_score);
+      }
 
-        // --- 3. APPLY PERSONAL VOTE TO BUTTONS (CRITICAL FIX) ---
-        // Uses the directly imported setSelected function
-        const buttons = refs.voteButtons;
-        if (buttons && buttons.length) {
-            setSelected(buttons, myPersonalVote, null); 
-        }
+      // b. Personal Vote for Button Highlight
+      if (summary.currentVote != null) {
+        myPersonalVote = Number(summary.currentVote);
+      }
 
-        // --- 4. RENDER GLOBAL COUNT/SUMMARY TEXT (CRITICAL FIX) ---
-        if (!root.classList.contains("sp-root-minimized")) {
-            const summaryEl = refs.votesSummary;
-            if (summaryEl) {
-                // Uses the directly imported renderVoteSummary function
-                renderVoteSummary(summaryEl, summary, ctx);
-            }
-            if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
+      // c. Desired Vote (from get_vote.php)
+      if (summary.desired_value != null) {
+        myDesiredVote = Number(summary.desired_value);
+      }
+
+      // d. Rank (Global Rank)
+      if (summary.rank != null) {
+        initialRank = Number(summary.rank);
+      }
+
+      // --- 3. APPLY PERSONAL VOTE TO BUTTONS (CRITICAL FIX) ---
+      // Uses the directly imported setSelected function
+      const buttons = refs.voteButtons;
+      if (buttons && buttons.length) {
+        setSelected(buttons, myPersonalVote, myDesiredVote);
+      }
+
+      // --- 4. RENDER GLOBAL COUNT/SUMMARY TEXT (CRITICAL FIX) ---
+      if (!root.classList.contains("sp-root-minimized")) {
+        const summaryEl = refs.votesSummary;
+        if (summaryEl) {
+          // Uses the directly imported renderVoteSummary function
+          renderVoteSummary(summaryEl, summary, ctx);
         }
-    } 
+        if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
+      }
+    }
 
     // Update Logo (Use Global Score/Rank)
     updateLogoVisual(root, header, logoGlobalScore || 0, initialRank || null);
-    
+
   } catch (err) {
     spError("hydrateVoteAndLogo error", err);
   }
@@ -423,45 +429,45 @@ async function applyMinimizedState(root, minimized) {
     const root = buildRoot(theme); // IMMEDIATE: Draw extension
     const voteContext = getVotingContext();
     const header = buildToolbar(root, voteContext); // IMMEDIATE: Logo and Control/Settings zones visible
-    
+
     // IMMEDIATE: Ensure logo shows a sane default ("SP") immediately.
-    updateLogoVisual(root, header, 0); 
+    updateLogoVisual(root, header, 0);
     const { panel: searchPanel, input: searchInput } = attachSearch(root, header);
-        
+
     // Kick off member bootstrap in the background
-(async () => {
+    (async () => {
       // CRITICAL FIX: Get previous ID before checking server
-      const previousId = await getState("memberId", 0); 
-      
+      const previousId = await getState("memberId", 0);
+
       const memberUuid = await getOrCreateMemberUuid();
       spLog("ShadowPulse build", SP_CONFIG.VERSION);
       spLog("ShadowPulse member UUID", memberUuid);
       try {
         trackPageView(memberUuid);
         const info = await bootstrapMember(memberUuid);
-        
+
         if (info && info.member_id != null) {
           const numericId = Number(info.member_id) || 0;
-          
+
           // Identity Change Detection (e.g., switched from temp ID to restored ID)
           if (numericId > 0 && previousId > 0 && numericId !== previousId) {
-              spLog(`Identity Change Detected (${previousId} -> ${numericId}). Wiping local storage.`);
-              
-              // WIPE STORAGE and force reload to ensure a clean start
-              await new Promise(r => chrome.storage.local.clear(r));
-              
-              await setState("memberUuid", info.member_uuid || memberUuid);
-              await setState("memberId", numericId);
-              await setState("memberRestoreAck", !!info.restore_ack);
-              window.location.reload(); 
-              return;
+            spLog(`Identity Change Detected (${previousId} -> ${numericId}). Wiping local storage.`);
+
+            // WIPE STORAGE and force reload to ensure a clean start
+            await new Promise(r => chrome.storage.local.clear(r));
+
+            await setState("memberUuid", info.member_uuid || memberUuid);
+            await setState("memberId", numericId);
+            await setState("memberRestoreAck", !!info.restore_ack);
+            window.location.reload();
+            return;
           }
 
           if (numericId > 0) {
             await setState("memberId", numericId);
             await setState("memberUuid", info.member_uuid || memberUuid);
             await setState("memberRestoreAck", !!info.restore_ack);
-            
+
             // Re-run vote/logo/settings-highlight logic after bootstrap to use new ID/Ack
             await hydrateVoteAndLogo(root, header, voteContext);
           }
@@ -502,10 +508,10 @@ async function applyMinimizedState(root, minimized) {
               const autoMin = (await getState("autoMin", false)) === true;
               if (autoMin) await setState("autoMin", false);
             } catch (e) { /* ignore */ }
-            
+
             // Re-trigger ASAP load after restore
             hydrateAds(header);
-            hydrateVoteAndLogo(root, header, voteContext); 
+            hydrateVoteAndLogo(root, header, voteContext);
             hydrateStats(header); // Trigger stats refresh immediately on restore
             return;
           }
@@ -525,28 +531,28 @@ async function applyMinimizedState(root, minimized) {
     // === HYDRATION (ASAP phase) ===
 
     // 1. Load Ad & make visible
-    await hydrateAds(header); 
-    
+    await hydrateAds(header);
+
     // 2. Initial Vote/Logo/Settings Highlight/Votes Zone Visibility
     await hydrateVoteAndLogo(root, header, voteContext);
-        
+
     // === PERIODIC REFRESH (EVERY xx MINS) ===
     const refreshIntervalMins = SP_CONFIG.REFRESH_INTERVAL_MINUTES || 5;
     const intervalMs = refreshIntervalMins * 60 * 1000;
-    
+
     // Run initial periodic update immediately if not minimized
     if (!isMinimizedNow) {
-        await hydrateStats(header);
+      await hydrateStats(header);
     }
-    
+
     // Consolidate both vote and stats refresh into one timer
     setInterval(async () => {
       // 1. Refresh VOTE status, Logo, and Summary (from get_vote)
       await hydrateVoteAndLogo(root, header, voteContext);
-      
+
       // 2. Refresh BITCOIN STATS (from last record / API)
       if (!root.classList.contains("sp-root-minimized")) {
-        await hydrateStats(header); 
+        await hydrateStats(header);
       }
     }, intervalMs);
 

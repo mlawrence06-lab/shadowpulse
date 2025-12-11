@@ -61,6 +61,11 @@ if ($desiredValue < 1 || $desiredValue > 5) {
     exit;
 }
 
+if ($voteCategory === 'post') {
+    echo json_encode(['error' => 'Post voting is disabled']);
+    exit;
+}
+
 require __DIR__ . '/../../config/db.php';
 
 try {
@@ -68,7 +73,9 @@ try {
 
     // --- NEW: Context Enrichment ---
     require_once __DIR__ . '/../core/metadata.php';
-    ensure_content_metadata($voteCategory, $targetId, $pdo);
+
+    $contextTopicId = isset($data['context_topic_id']) ? (int) $data['context_topic_id'] : 0;
+    $metaDebug = ensure_content_metadata($voteCategory, $targetId, $pdo, $contextTopicId);
     // -------------------------------
 
     // Look up member_id from member_uuid.
@@ -113,6 +120,7 @@ try {
         'desired_value' => $desiredValue,
         'vote_category' => $voteCategory,
         'target_id' => $targetId,
+        'debug_metadata' => $metaDebug // Return debug stats to client
     ]);
 } catch (Throwable $e) {
     error_log('vote error: ' . $e->getMessage());

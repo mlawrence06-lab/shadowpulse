@@ -68,7 +68,7 @@ export async function fetchBitcoinStats() {
     return json;
   } catch (err) {
     spLog("fetchBitcoinStats error", err);
-    return null; 
+    return null;
   }
 }
 
@@ -86,7 +86,7 @@ export async function fetchVoteSummary(voteContext) {
 
   try {
     const memberUuid = await getOrCreateMemberUuid();
-    
+
     // Construct the URL to get_vote.php
     const url = new URL(SP_CONFIG.GET_VOTE_API);
     url.searchParams.append("member_uuid", memberUuid);
@@ -96,7 +96,7 @@ export async function fetchVoteSummary(voteContext) {
 
     const res = await fetch(url.toString());
     if (!res.ok) return null;
-    
+
     const json = await res.json();
     return json;
   } catch (err) {
@@ -124,11 +124,15 @@ export async function submitVote(value, voteContext) {
     }
 
     // 3. Construct Payload for cast_vote.php
+    const memberUuid = await getOrCreateMemberUuid();
+
+    // 3. Construct Payload for vote.php
     const payload = {
-      member_id: Number(memberId), // Send Integer
+      member_uuid: memberUuid,
       vote_category: voteContext && voteContext.voteCategory ? voteContext.voteCategory : "topic",
       target_id: voteContext && typeof voteContext.targetId === "number" ? voteContext.targetId : 0,
-      desired_value: Number(value)
+      desired_value: Number(value),
+      context_topic_id: voteContext && voteContext.topicId ? Number(voteContext.topicId) : 0
     };
 
     // 4. Send Request
@@ -147,11 +151,21 @@ export async function submitVote(value, voteContext) {
 
     const json = await res.json();
 
-    // 5. Parse Response (New Structure: { ok: true, data: { effective_value: X } })
+    // 5. Parse Response (Structure: { ok: true, effective_value: X })
     let effectiveValue = value;
-    
-    if (json.ok && json.data && typeof json.data.effective_value === "number") {
-      effectiveValue = json.data.effective_value;
+
+    if (json.ok) {
+      // DEBUG LOGGING REQUESTED BY USER
+      if (json.debug_metadata) {
+        console.log("[ShadowPulse] Metadata Debug:", json.debug_metadata);
+      }
+
+      if (typeof json.effective_value === "number") {
+        effectiveValue = json.effective_value;
+      } else if (json.data && typeof json.data.effective_value === "number") {
+        // Fallback for legacy/alternative structure
+        effectiveValue = json.data.effective_value;
+      }
     } else {
       // Fallback if response structure is unexpected
       effectiveValue = value;
@@ -218,9 +232,9 @@ export async function restoreMember(restoreCode) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ 
-        restore_code: restoreCode,
-        discard_uuid: currentUuid // <-- THIS IS THE NEW FIELD
+    body: JSON.stringify({
+      restore_code: restoreCode,
+      discard_uuid: currentUuid // <-- THIS IS THE NEW FIELD
     })
   });
 
@@ -367,7 +381,7 @@ export async function savePreferences(prefs) {
 
   try {
     const memberUuid = await getOrCreateMemberUuid();
-    
+
     // Map JS keys to PHP keys
     const payload = { member_uuid: memberUuid };
     if (prefs.theme) payload.pref_theme = prefs.theme;

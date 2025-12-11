@@ -1,0 +1,6 @@
+2025-12-11 10:39:37 - Input: {"member_uuid":"d12e9e3b-87af-4909-b99c-2b50cfc9c6fd","vote_category":"topic","target_id":5529359,"desired_value":5}
+Attempting DB connect...
+Included db.php
+2025-12-11 10:42:22 - Input: {"member_uuid":"d12e9e3b-87af-4909-b99c-2b50cfc9c6fd","vote_category":"topic","target_id":5529359,"desired_value":5}
+Attempting DB connect...
+Included db.php

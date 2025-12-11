@@ -20,8 +20,6 @@ function sp_get_pdo()
     try {
         return new PDO($dsn, $user, $pass, $options);
     } catch (\PDOException $e) {
-        // In production, log this to a file instead of echoing
-        // throw new \PDOException($e->getMessage(), (int)$e->getCode());
-        die("Database connection failed: " . $e->getMessage());
+        throw new \Exception("Database connection failed: " . $e->getMessage());
     }
 }
