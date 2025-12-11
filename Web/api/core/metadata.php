@@ -4,7 +4,7 @@
  * Handles looking up and storing content hierarchy (Post -> Topic -> Board).
  */
 
-require_once __DIR__ . '/../db.php'; // adjusting path assuming this is in Web/core/
+require_once __DIR__ . '/../../config/db.php';
 
 function ensure_content_metadata($category, $target_id, $pdo)
 {

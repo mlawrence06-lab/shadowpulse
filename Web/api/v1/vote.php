@@ -61,13 +61,13 @@ if ($desiredValue < 1 || $desiredValue > 5) {
     exit;
 }
 
-require __DIR__ . '/db.php';
+require __DIR__ . '/../../config/db.php';
 
 try {
     $pdo = sp_get_pdo();
 
     // --- NEW: Context Enrichment ---
-    require_once 'core/metadata.php';
+    require_once __DIR__ . '/../core/metadata.php';
     ensure_content_metadata($voteCategory, $targetId, $pdo);
     // -------------------------------
 

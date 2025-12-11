@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ShadowPulse",
-  "version": "0.25.41",
+  "version": "0.25.42",
   "description": "Voting Improvements",
   "permissions": [
     "storage"
