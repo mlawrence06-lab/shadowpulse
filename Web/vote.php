@@ -44,14 +44,20 @@ if (!is_array($data)) {
     exit;
 }
 
-$memberUuid   = isset($data['member_uuid']) ? trim((string)$data['member_uuid']) : '';
-$voteCategory = isset($data['vote_category']) ? trim((string)$data['vote_category']) : '';
-$targetId     = isset($data['target_id']) ? (int)$data['target_id'] : 0;
-$desiredValue = isset($data['desired_value']) ? (int)$data['desired_value'] : 0;
+$memberUuid = isset($data['member_uuid']) ? trim((string) $data['member_uuid']) : '';
+$voteCategory = isset($data['vote_category']) ? trim((string) $data['vote_category']) : '';
+$targetId = isset($data['target_id']) ? (int) $data['target_id'] : 0;
+$desiredValue = isset($data['desired_value']) ? (int) $data['desired_value'] : 0;
 
-if ($memberUuid === '' || $targetId <= 0 || $desiredValue < 1 || $desiredValue > 5) {
+if ($memberUuid === '' || $targetId <= 0) { // Validate input ranges
     http_response_code(400);
     echo json_encode(['error' => 'Missing or invalid fields']);
+    exit;
+}
+
+if ($desiredValue < 1 || $desiredValue > 5) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid value']);
     exit;
 }
 
@@ -59,6 +65,11 @@ require __DIR__ . '/db.php';
 
 try {
     $pdo = sp_get_pdo();
+
+    // --- NEW: Context Enrichment ---
+    require_once 'core/metadata.php';
+    ensure_content_metadata($voteCategory, $targetId, $pdo);
+    // -------------------------------
 
     // Look up member_id from member_uuid.
     $stmt = $pdo->prepare('SELECT member_id FROM members WHERE member_uuid = :uuid LIMIT 1');
@@ -71,7 +82,7 @@ try {
         exit;
     }
 
-    $memberId = (int)$row['member_id'];
+    $memberId = (int) $row['member_id'];
 
     // Call stored procedure: shadowpulse_cast_vote
     // IN  p_member_id       BIGINT UNSIGNED,
@@ -82,9 +93,9 @@ try {
     $spSql = 'CALL shadowpulse_cast_vote(:member_id, :vote_category, :target_id, :desired_value, @p_effective_value)';
     $spStmt = $pdo->prepare($spSql);
     $spStmt->execute([
-        ':member_id'     => $memberId,
+        ':member_id' => $memberId,
         ':vote_category' => $voteCategory,
-        ':target_id'     => $targetId,
+        ':target_id' => $targetId,
         ':desired_value' => $desiredValue,
     ]);
 
@@ -94,20 +105,20 @@ try {
         throw new RuntimeException('shadowpulse_cast_vote did not return an effective_value');
     }
 
-    $effectiveValue = (int)$outRow['effective_value'];
+    $effectiveValue = (int) $outRow['effective_value'];
 
     echo json_encode([
-        'ok'             => true,
-        'effective_value'=> $effectiveValue,
-        'desired_value'  => $desiredValue,
-        'vote_category'  => $voteCategory,
-        'target_id'      => $targetId,
+        'ok' => true,
+        'effective_value' => $effectiveValue,
+        'desired_value' => $desiredValue,
+        'vote_category' => $voteCategory,
+        'target_id' => $targetId,
     ]);
 } catch (Throwable $e) {
     error_log('vote error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
-        'error'   => 'Server error',
+        'error' => 'Server error',
         'message' => $e->getMessage(),
     ]);
 }
