@@ -42,7 +42,7 @@ export function createSearchPanel(rootEl) {
 
     let baseUrl = SP_CONFIG.DEFAULT_SEARCH_ENGINE_URL;
     if (!baseUrl || baseUrl === "***") {
-      baseUrl = "https://vod.fan/shadowpulse/search.php";
+      baseUrl = "https://vod.fan/shadowpulse/website/search.php";
     }
 
     let url;
@@ -58,7 +58,7 @@ export function createSearchPanel(rootEl) {
       if (memberUuid) {
         // Increment general search counter
         trackSearch(memberUuid);
-        
+
         // ADDED: Log specific search term for history
         logSearchQuery(memberUuid, term, 1);
       }

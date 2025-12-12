@@ -87,17 +87,12 @@ body {
 }
 
 .brand-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 30% 20%, #1E90FF, #1b4f9f);
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 0.85),
-    0 10px 26px rgba(30, 144, 255, 0.65);
-  position: relative;
+  /* Removed border-radius/background/shadow to let the image fill the box */
 }
 
 .brand-logo svg {
@@ -113,28 +108,24 @@ body {
 
 .brand-name {
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  font-size: 1.1rem;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.brand-name .highlight {
   color: #e5e7eb;
+  /* Unified color */
 }
 
-.brand-name .pulse {
-  color: var(--accent);
-}
+/* Removed .highlight and .pulse */
 
 .brand-tagline {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.15em;
   color: var(--text-muted);
-  opacity: 0.85;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
 /* Navigation */
@@ -183,11 +174,9 @@ body {
 .site-nav .nav-link.nav-link-active {
   color: var(--text-main);
   border-color: var(--accent);
-  background: linear-gradient(
-    90deg,
-    rgba(30, 144, 255, 0.2),
-    rgba(15, 23, 42, 0.95)
-  );
+  background: linear-gradient(90deg,
+      rgba(30, 144, 255, 0.2),
+      rgba(15, 23, 42, 0.95));
 }
 
 .site-nav .nav-link.nav-link-active .dot {

@@ -60,11 +60,35 @@ export async function fetchBitcoinStats() {
   }
 
   try {
+    // Check local storage cache
+    const CACHE_KEY = "sp_btc_stats";
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const entry = JSON.parse(cached);
+        if (Date.now() - entry.timestamp < CACHE_TTL) {
+          // spLog("Restoring Bitcoin stats from cache");
+          return entry.data;
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     // Add cache buster to prevent browser caching of the JSON
     const url = `${SP_CONFIG.GET_STATS_API}?t=${Date.now()}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
+
+    // Save to cache
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        data: json
+      }));
+    } catch (e) { /* ignore */ }
+
     return json;
   } catch (err) {
     spLog("fetchBitcoinStats error", err);
@@ -87,6 +111,24 @@ export async function fetchVoteSummary(voteContext) {
   try {
     const memberUuid = await getOrCreateMemberUuid();
 
+    // Construct cache key based on context
+    const cat = voteContext.voteCategory || "topic";
+    const tid = voteContext.targetId || 0;
+    const CACHE_KEY = `sp_vote_${cat}_${tid}`;
+    const CACHE_TTL = 20 * 1000; // 20 seconds (ensure it expires before 30s poll)
+
+    // Check cache
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const entry = JSON.parse(cached);
+        if (Date.now() - entry.timestamp < CACHE_TTL) {
+          // spLog("Restoring Vote Summary from cache", CACHE_KEY);
+          return entry.data;
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     // Construct the URL to get_vote.php
     const url = new URL(SP_CONFIG.GET_VOTE_API);
     url.searchParams.append("member_uuid", memberUuid);
@@ -98,6 +140,15 @@ export async function fetchVoteSummary(voteContext) {
     if (!res.ok) return null;
 
     const json = await res.json();
+
+    // Update Cache
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        data: json
+      }));
+    } catch (e) { /* ignore */ }
+
     return json;
   } catch (err) {
     spLog("fetchVoteSummary error", err);
@@ -150,6 +201,14 @@ export async function submitVote(value, voteContext) {
     }
 
     const json = await res.json();
+
+    // 5a. CRITICAL: Invalidate Cache for this topic so immediate re-fetch gets fresh data
+    try {
+      const cat = voteContext && voteContext.voteCategory ? voteContext.voteCategory : "topic";
+      const tid = voteContext && typeof voteContext.targetId === "number" ? voteContext.targetId : 0;
+      const CACHE_KEY = `sp_vote_${cat}_${tid}`;
+      localStorage.removeItem(CACHE_KEY);
+    } catch (e) { /* ignore */ }
 
     // 5. Parse Response (Structure: { ok: true, effective_value: X })
     let effectiveValue = value;

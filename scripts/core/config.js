@@ -9,7 +9,7 @@ export const SP_CONFIG = {
   VERSION: chrome.runtime.getManifest().version,
   DEFAULT_THEME: "light",
   DEFAULT_SEARCH_ENGINE_NAME: "Bitlist Search",
-  DEFAULT_SEARCH_ENGINE_URL: "https://vod.fan/shadowpulse/search.php",
+  DEFAULT_SEARCH_ENGINE_URL: "https://vod.fan/shadowpulse/website/search.php",
   DEV_MODE: true,
   REFRESH_INTERVAL_MINUTES: 5, // Default to 5 minutes
   SITE_PATTERN: /(^|\.)bitcointalk\.org$/i,

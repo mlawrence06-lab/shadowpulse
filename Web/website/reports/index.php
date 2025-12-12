@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/cors.php';
+require_once __DIR__ . '/../../api/v1/cors.php';
 
 $pageTitle = "Reports Home";
 $pageSubtitle = "Analytics & Data Exports";

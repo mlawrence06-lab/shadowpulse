@@ -1,3 +1,6 @@
-
+.agent/ssh/
 .DS_Store
 Thumbs.db
+*.key
+*.pub
+config/db.php

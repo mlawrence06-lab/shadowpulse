@@ -40,57 +40,62 @@ function updateLogoVisual(root, header, numeric, rank = null) {
 
   const logoCircle = header._spRefs.logoCircle;
   const logoText = header._spRefs.logoText;
-  if (!logoCircle) return;
+  if (!logoCircle || !logoText) return;
 
   const value = Number(numeric) || 0;
-
-  // Define a small epsilon for robust floating-point comparisons to 3.0
   const EPSILON = 0.0001;
 
-  // 1. New Color Logic: 
-  // - Green (>3)
-  // - Red (<3 but >0)
-  // - Blue (Everything else: 0 or ~3)
+  // Determine Target Color
   let colorKey = "blue";
-
   if (value > (3 + EPSILON)) {
-    colorKey = "green"; // Score > 3
+    colorKey = "green";
   } else if (value > EPSILON && value < (3 - EPSILON)) {
-    colorKey = "red";   // Score between 0 and 3
+    colorKey = "red";
   }
-  // Otherwise, remains blue (default)
 
-  logoCircle.removeAttribute('data-vote-color');
-  logoCircle.dataset.voteColor = colorKey;
+  // Determine Target Text
+  let newText = "SP";
+  if (value) {
+    const absFrac = Math.abs(value % 1);
+    newText = absFrac < 0.1 ? value.toFixed(0) : value.toFixed(1);
+  }
 
-  // 2. New Display Format: One decimal or integer
-  if (logoText) {
-    if (!value) {
-      logoText.textContent = "SP";
-    } else {
-      const absFrac = Math.abs(value % 1);
-      // Display one decimal point unless the fractional part is near-zero (less than 0.1)
-      const display = absFrac < 0.1 ? value.toFixed(0) : value.toFixed(1);
-      logoText.textContent = display;
-    }
+  // Helper to apply visual state
+  const applyState = () => {
+    logoCircle.removeAttribute('data-vote-color');
+    logoCircle.dataset.voteColor = colorKey;
+    logoText.textContent = newText;
+
+    // Ensure dark/light stroke updates
     const isDark = (root.classList || { contains: () => false }).contains("sp-theme-dark");
     logoText.style.color = "#f9fafb";
     logoText.style.webkitTextStroke = isDark ? "1px #000" : "1px #fff";
-  }
 
-  // 3. Tooltip (Ranked xth (Score: X.X))
-  let tooltip = "ShadowPulse";
-  if (rank && rank > 0) {
-    tooltip = `Ranked ${rank}${getOrdinalSuffix(rank)}`;
-    if (value > 0) {
+    // Tooltip update
+    let tooltip = "ShadowPulse";
+    if (rank && rank > 0) {
+      tooltip = `Ranked ${rank}${getOrdinalSuffix(rank)}`;
+      tooltip += (value > 0) ? ` (Score: ${value.toFixed(1)})` : ` (Score: ---)`;
+    } else if (value > 0) {
       tooltip += ` (Score: ${value.toFixed(1)})`;
-    } else {
-      tooltip += ` (Score: ---)`;
     }
-  } else if (value > 0) {
-    tooltip += ` (Score: ${value.toFixed(1)})`;
+    logoCircle.title = tooltip;
+  };
+
+  // CHECK: If text is changing, animate. If not (just init), set immediately.
+  if (logoText.textContent !== newText) {
+    // 1. Fade Out
+    logoText.classList.add('sp-fade-out');
+
+    // 2. Wait for fade out (300ms) then Swap & Fade In
+    setTimeout(() => {
+      applyState(); // Change color AND text while hidden
+      logoText.classList.remove('sp-fade-out');
+    }, 300);
+  } else {
+    // No text change, apply immediately (e.g. init or redundant call)
+    applyState();
   }
-  logoCircle.title = tooltip;
 }
 
 function buildRoot(theme) {
@@ -541,7 +546,7 @@ async function applyMinimizedState(root, minimized) {
     await hydrateVoteAndLogo(root, header, voteContext);
 
     // === PERIODIC REFRESH (EVERY xx MINS) ===
-    const refreshIntervalMins = SP_CONFIG.REFRESH_INTERVAL_MINUTES || 5;
+    const refreshIntervalMins = SP_CONFIG.REFRESH_INTERVAL_MINUTES || 0.5; // Default to 30 seconds
     const intervalMs = refreshIntervalMins * 60 * 1000;
 
     // Run initial periodic update immediately if not minimized

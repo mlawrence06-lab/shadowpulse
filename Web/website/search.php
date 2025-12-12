@@ -1,16 +1,15 @@
 <?php
-require __DIR__ . '/cors.php';
+declare(strict_types=1);
+require_once __DIR__ . '/../api/v1/cors.php';
 
 // search.php
 // Endpoint: https://vod.fan/shadowpulse/search.php?q=<term>
-
-declare(strict_types=1);
 
 // Basic settings
 $apiBase = 'https://api.ninjastic.space/shadowpulse';
 
 // Get search term from query string
-$term = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+$term = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
 
 $results = [];
 $errorMessage = '';
@@ -26,9 +25,9 @@ if ($term !== '') {
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
-            $body   = curl_exec($ch);
+            $body = curl_exec($ch);
             $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $errNo  = curl_errno($ch);
+            $errNo = curl_errno($ch);
             $errStr = curl_error($ch);
             curl_close($ch);
 
@@ -48,7 +47,7 @@ if ($term !== '') {
             // Fallback to file_get_contents if cURL is not available
             $context = stream_context_create([
                 'http' => [
-                    'method'  => 'GET',
+                    'method' => 'GET',
                     'timeout' => 10,
                 ]
             ]);
@@ -80,14 +79,9 @@ include __DIR__ . '/header.php';
         <form class="search-form" method="get" action="search.php">
             <label for="q" class="search-label">Search Bitcointalk</label>
             <div class="search-input-row">
-                <input
-                    type="text"
-                    id="q"
-                    name="q"
-                    class="search-input"
+                <input type="text" id="q" name="q" class="search-input"
                     placeholder="Search topics, posts, or usernames…"
-                    value="<?php echo htmlspecialchars($term, ENT_QUOTES, 'UTF-8'); ?>"
-                >
+                    value="<?php echo htmlspecialchars($term, ENT_QUOTES, 'UTF-8'); ?>">
                 <button type="submit" class="search-button">Search</button>
             </div>
         </form>
@@ -125,10 +119,10 @@ include __DIR__ . '/header.php';
                     //   "author": "User",
                     //   "date": "YYYY-MM-DD HH:MM:SS"
                     // }
-
-                    $title   = isset($row['title']) ? (string)$row['title'] : 'Untitled';
-                    $topicId = isset($row['topic_id']) ? (int)$row['topic_id'] : 0;
-                    $postId  = isset($row['post_id']) ? (int)$row['post_id'] : 0;
+            
+                    $title = isset($row['title']) ? (string) $row['title'] : 'Untitled';
+                    $topicId = isset($row['topic_id']) ? (int) $row['topic_id'] : 0;
+                    $postId = isset($row['post_id']) ? (int) $row['post_id'] : 0;
 
                     if ($topicId > 0 && $postId > 0) {
                         $url = 'https://bitcointalk.org/index.php?topic=' . $topicId . '.msg' . $postId . '#msg' . $postId;
@@ -136,7 +130,7 @@ include __DIR__ . '/header.php';
                         $url = '#';
                     }
 
-                    $rawSnippet = isset($row['content']) ? (string)$row['content'] : '';
+                    $rawSnippet = isset($row['content']) ? (string) $row['content'] : '';
                     $snippet = '';
 
                     if ($rawSnippet !== '') {
@@ -153,15 +147,13 @@ include __DIR__ . '/header.php';
                         }
                     }
 
-                    $boardName = isset($row['board_name']) ? (string)$row['board_name'] : '';
-                    $author    = isset($row['author']) ? (string)$row['author'] : '';
-                    $date      = isset($row['date']) ? (string)$row['date'] : '';
+                    $boardName = isset($row['board_name']) ? (string) $row['board_name'] : '';
+                    $author = isset($row['author']) ? (string) $row['author'] : '';
+                    $date = isset($row['date']) ? (string) $row['date'] : '';
                     ?>
                     <li class="result-item">
-                        <a class="result-title"
-                           href="<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>"
-                           target="_blank"
-                           rel="noopener">
+                        <a class="result-title" href="<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>"
+                            target="_blank" rel="noopener">
                             <?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>
                         </a>
 

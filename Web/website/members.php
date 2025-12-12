@@ -1,10 +1,10 @@
 <?php
-require __DIR__ . '/cors.php';
+require_once __DIR__ . '/../api/v1/cors.php';
 
 // members.php
 // ShadowPulse Members Overview
 
-$pageTitle    = "Members";
+$pageTitle = "Members";
 $pageSubtitle = "Bitcointalk member insights & activity";
 
 include __DIR__ . '/header.php';
@@ -21,13 +21,9 @@ include __DIR__ . '/header.php';
     <div class="content-body">
         <!-- Simple member search/filter bar -->
         <form class="search-form" method="get" action="">
-            <input
-                type="text"
-                name="q"
-                placeholder="Search members by username, ID, or keyword…"
+            <input type="text" name="q" placeholder="Search members by username, ID, or keyword…"
                 value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q'], ENT_QUOTES, 'UTF-8') : ''; ?>"
-                autocomplete="off"
-            >
+                autocomplete="off">
             <button type="submit">Filter</button>
         </form>
 
@@ -40,36 +36,36 @@ include __DIR__ . '/header.php';
         // Demo data – replace with real query later.
         $fakeMembers = [
             [
-                'username'   => 'Vod',
-                'user_id'    => 12345,
-                'rank'       => 'Legendary',
-                'activity'   => 2450,
-                'merit'      => 1600,
-                'last_seen'  => '2025-11-25 13:42:00',
-                'boards'     => 'Economics, Meta',
+                'username' => 'Vod',
+                'user_id' => 12345,
+                'rank' => 'Legendary',
+                'activity' => 2450,
+                'merit' => 1600,
+                'last_seen' => '2025-11-25 13:42:00',
+                'boards' => 'Economics, Meta',
             ],
             [
-                'username'   => 'Satoshi',
-                'user_id'    => 3,
-                'rank'       => 'Legendary',
-                'activity'   => 500,
-                'merit'      => 1000,
-                'last_seen'  => '2010-12-13 19:00:00',
-                'boards'     => 'Technical Discussion, Development & Technical',
+                'username' => 'Satoshi',
+                'user_id' => 3,
+                'rank' => 'Legendary',
+                'activity' => 500,
+                'merit' => 1000,
+                'last_seen' => '2010-12-13 19:00:00',
+                'boards' => 'Technical Discussion, Development & Technical',
             ],
             [
-                'username'   => 'ExampleUser',
-                'user_id'    => 987654,
-                'rank'       => 'Sr. Member',
-                'activity'   => 450,
-                'merit'      => 210,
-                'last_seen'  => '2025-11-28 09:15:00',
-                'boards'     => 'Altcoins, Gambling',
+                'username' => 'ExampleUser',
+                'user_id' => 987654,
+                'rank' => 'Sr. Member',
+                'activity' => 450,
+                'merit' => 210,
+                'last_seen' => '2025-11-28 09:15:00',
+                'boards' => 'Altcoins, Gambling',
             ],
         ];
 
         // Basic filtering if q is present (case-insensitive contains match)
-        $q = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+        $q = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
         if ($q !== '') {
             $lcQ = mb_strtolower($q);
             $fakeMembers = array_filter($fakeMembers, function ($m) use ($lcQ) {
@@ -99,9 +95,7 @@ include __DIR__ . '/header.php';
                     <li class="result-item">
                         <div class="result-title">
                             <a href="https://bitcointalk.org/index.php?action=profile;u=<?php
-                                echo (int)$member['user_id']; ?>"
-                               target="_blank"
-                               rel="noopener noreferrer">
+                            echo (int) $member['user_id']; ?>" target="_blank" rel="noopener noreferrer">
                                 <?php echo htmlspecialchars($member['username'], ENT_QUOTES, 'UTF-8'); ?>
                             </a>
                         </div>
@@ -112,9 +106,9 @@ include __DIR__ . '/header.php';
                             if (!empty($member['rank'])) {
                                 $metaBits[] = $member['rank'];
                             }
-                            $metaBits[] = 'UID ' . (int)$member['user_id'];
-                            $metaBits[] = 'Activity ' . (int)$member['activity'];
-                            $metaBits[] = 'Merit ' . (int)$member['merit'];
+                            $metaBits[] = 'UID ' . (int) $member['user_id'];
+                            $metaBits[] = 'Activity ' . (int) $member['activity'];
+                            $metaBits[] = 'Merit ' . (int) $member['merit'];
                             echo htmlspecialchars(implode(' • ', $metaBits), ENT_QUOTES, 'UTF-8');
                             ?>
                         </div>
