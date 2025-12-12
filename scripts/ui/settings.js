@@ -32,14 +32,14 @@ export async function openSettingsModal(root) {
   try {
     const currentTheme = await getState("theme", SP_CONFIG.DEFAULT_THEME);
     applyThemeSelection(backdrop, currentTheme);
-  } catch (_) {}
+  } catch (_) { }
 
   // Restore UI state for Search Engine
   try {
     const currentSearch = await getState("searchEngine", "bitlist");
     const searchSelect = backdrop.querySelector('select[name="sp-search-engine"]');
     if (searchSelect) searchSelect.value = currentSearch;
-  } catch (_) {}
+  } catch (_) { }
 
   // Populate Member Identity
   try {
@@ -47,7 +47,7 @@ export async function openSettingsModal(root) {
     const memberUuid = await getState("memberUuid", null);
     const restoreAck = await getState("memberRestoreAck", false);
     applyMemberIdentity(backdrop, memberId, memberUuid, !!restoreAck);
-  } catch (_) {}
+  } catch (_) { }
 
   backdrop.classList.add("sp-settings-open");
 
@@ -56,9 +56,9 @@ export async function openSettingsModal(root) {
     try {
       const memberUuid = await getState("memberUuid", null);
       if (memberUuid) {
-        const stats = await fetchMemberStats(memberUuid);
-        if (stats) {
-          applyStats(backdrop, stats);
+        const response = await fetchMemberStats(memberUuid);
+        if (response && response.stats) {
+          applyStats(backdrop, response.stats);
         }
       }
     } catch (err) {
@@ -83,7 +83,7 @@ function buildSettingsModal(root) {
   title.textContent = "ShadowPulse";
   const version = createEl("div", ["sp-settings-version"]);
   version.textContent = "Version " + SP_CONFIG.VERSION;
-  
+
   headerText.appendChild(title);
   headerText.appendChild(version);
   header.appendChild(headerText);
@@ -102,12 +102,12 @@ function buildSettingsModal(root) {
   settingsSection.appendChild(settingsTitle);
 
   const settingsBlock = createCenterBlock();
-  
+
   // 1. Theme
   const themeRow = createEl("div", ["sp-settings-row"]);
   const themeLabel = createEl("span", ["sp-settings-row-label"]);
   themeLabel.textContent = "Theme:";
-  
+
   const themeSelect = createEl("select", ["sp-settings-select"]);
   themeSelect.name = "sp-theme";
   themeSelect.appendChild(new Option("Light", "light"));
@@ -128,12 +128,12 @@ function buildSettingsModal(root) {
   const searchRow = createEl("div", ["sp-settings-row"]);
   const searchLabel = createEl("span", ["sp-settings-row-label"]);
   searchLabel.textContent = "Search Engine:";
-  
+
   const searchSelect = createEl("select", ["sp-settings-select"]);
   searchSelect.name = "sp-search-engine";
   searchSelect.appendChild(new Option("BitList", "bitlist"));
   searchSelect.appendChild(new Option("Google", "google"));
-  
+
   // Search Change: Local & Sync
   searchSelect.addEventListener("change", async () => {
     const val = searchSelect.value;
@@ -148,8 +148,8 @@ function buildSettingsModal(root) {
   // 3. Bitcoin Source
   const btcRow = createEl("div", ["sp-settings-row"]);
   const btcLabel = createEl("span", ["sp-settings-row-label"]);
-  btcLabel.textContent = "Bitcoin Source:"; 
-  
+  btcLabel.textContent = "Bitcoin Source:";
+
   const btcSelect = createEl("select", ["sp-settings-select"]);
   btcSelect.appendChild(new Option("Binance Standard", "binance"));
 
@@ -159,7 +159,7 @@ function buildSettingsModal(root) {
     await setState("btcSource", val);
     savePreferences({ btcSource: val });
   });
-  
+
   // Init BTC Source value
   getState("btcSource", "binance").then(val => { btcSelect.value = val; });
 
@@ -221,22 +221,22 @@ function buildSettingsModal(root) {
 
   // ===== ACCOUNT SECURITY SECTION (With Toggle) =====
   const secSection = createEl("div", ["sp-settings-section"]);
-  
+
   const secHeader = createEl("div", ["sp-settings-section-header"]);
   const secTitle = createEl("div", ["sp-settings-section-title"]);
   secTitle.textContent = "Account Security";
   secTitle.style.marginBottom = "0";
-  
+
   const toggleBtn = createEl("button", ["sp-settings-section-toggle"]);
   toggleBtn.type = "button";
-  toggleBtn.textContent = "SHOW"; 
-  
+  toggleBtn.textContent = "SHOW";
+
   secHeader.appendChild(secTitle);
   secHeader.appendChild(toggleBtn);
   secSection.appendChild(secHeader);
 
   const secBlock = createCenterBlock();
-  secBlock.classList.add("sp-settings-security-block"); 
+  secBlock.classList.add("sp-settings-security-block");
   secBlock.style.display = "none"; // Default Hidden
 
   // Toggle Logic
@@ -253,16 +253,16 @@ function buildSettingsModal(root) {
 
   // 1. Private Restore Code (Vertical Layout)
   const codeCol = createEl("div", ["sp-settings-col"]);
-  
+
   const codeLabel = createEl("div", ["sp-settings-label-block"]);
   codeLabel.textContent = "Private Restore Code:";
-  
+
   const codeGroup = createEl("div", ["sp-settings-input-group"]);
-  
+
   const codeValue = createEl("span", ["sp-settings-restore-code"]);
   codeValue.textContent = "…";
   codeValue.dataset.role = "sp-restore-code";
-  
+
   const copyBtn = createEl("button", ["sp-settings-restore-copy"]);
   copyBtn.type = "button";
   copyBtn.textContent = "Copy";
@@ -270,7 +270,7 @@ function buildSettingsModal(root) {
 
   codeGroup.appendChild(codeValue);
   codeGroup.appendChild(copyBtn);
-  
+
   codeCol.appendChild(codeLabel);
   codeCol.appendChild(codeGroup);
   secBlock.appendChild(codeCol);
@@ -280,13 +280,13 @@ function buildSettingsModal(root) {
   const ackInput = createEl("input");
   ackInput.type = "checkbox";
   ackInput.dataset.role = "sp-restore-ack";
-  
+
   const ackText = createEl("span", ["sp-settings-label"]);
   ackText.textContent = "Restore Code Saved Safely:";
-  
+
   ackRow.appendChild(ackText);
   ackRow.appendChild(ackInput);
-  
+
   secBlock.appendChild(ackRow);
 
   // 2. Restore Input
@@ -300,7 +300,7 @@ function buildSettingsModal(root) {
   pasteInput.type = "text";
   pasteInput.placeholder = "Paste code";
   pasteInput.dataset.role = "sp-restore-input";
-  
+
   const restoreBtn = createEl("button", ["sp-settings-restore-button"]);
   restoreBtn.type = "button";
   restoreBtn.textContent = "Go";
@@ -310,7 +310,7 @@ function buildSettingsModal(root) {
   restoreGroup.appendChild(restoreBtn);
   restoreCol.appendChild(restoreLabel);
   restoreCol.appendChild(restoreGroup);
-  
+
   // WARNING MESSAGE (Hidden by default)
   const warningText = createEl("div", ["sp-settings-warning"]);
   warningText.textContent = "⚠️ This will overwrite all your Settings and Statistics!";
@@ -404,7 +404,7 @@ function applyMemberIdentity(backdrop, memberId, memberUuid, restoreAck) {
       const text = codeEl.textContent || "";
       try {
         await navigator.clipboard.writeText(text);
-      } catch (_) {}
+      } catch (_) { }
     };
   }
 
@@ -416,31 +416,31 @@ function applyMemberIdentity(backdrop, memberId, memberUuid, restoreAck) {
       if (!code) return;
       try {
         const info = await restoreMember(code);
-if (info && info.member_uuid) {
-    // 1. WIPE LOCAL STORAGE (Removes ghost votes & old cache)
-    await new Promise((resolve) => {
-        chrome.storage.local.clear(() => resolve());
-    });
-    
-    // 2. Restore Identity (Saves to the now-empty storage)
-    await setMemberUuid(info.member_uuid);
-    await setState("memberUuid", info.member_uuid);
-    await setState("memberId", info.member_id || 0);
-    
-    // 3. Restore Preferences (Sync)
-    if (info.prefs) {
-      if (info.prefs.theme) await setState("theme", info.prefs.theme);
-      if (info.prefs.search) await setState("searchEngine", info.prefs.search);
-      if (info.prefs.btc_source) await setState("btcSource", info.prefs.btc_source);
-    }
+        if (info && info.member_uuid) {
+          // 1. WIPE LOCAL STORAGE (Removes ghost votes & old cache)
+          await new Promise((resolve) => {
+            chrome.storage.local.clear(() => resolve());
+          });
 
-    // 4. Mark as Saved (Ack)
-    await setState("memberRestoreAck", true);
-    try { await updateRestoreAck(info.member_uuid, true); } catch (_) {}
-    
-    // 5. Reload to apply clean state
-    window.location.reload();
-    }
+          // 2. Restore Identity (Saves to the now-empty storage)
+          await setMemberUuid(info.member_uuid);
+          await setState("memberUuid", info.member_uuid);
+          await setState("memberId", info.member_id || 0);
+
+          // 3. Restore Preferences (Sync)
+          if (info.prefs) {
+            if (info.prefs.theme) await setState("theme", info.prefs.theme);
+            if (info.prefs.search) await setState("searchEngine", info.prefs.search);
+            if (info.prefs.btc_source) await setState("btcSource", info.prefs.btc_source);
+          }
+
+          // 4. Mark as Saved (Ack)
+          await setState("memberRestoreAck", true);
+          try { await updateRestoreAck(info.member_uuid, true); } catch (_) { }
+
+          // 5. Reload to apply clean state
+          window.location.reload();
+        }
 
       } catch (err) {
         console.error("[ShadowPulse] restoreMember failed", err);
@@ -462,8 +462,8 @@ if (info && info.member_uuid) {
 
         // Auto-Collapse if checked
         if (next && secBlock && toggleBtn) {
-            secBlock.style.display = "none";
-            toggleBtn.textContent = "SHOW";
+          secBlock.style.display = "none";
+          toggleBtn.textContent = "SHOW";
         }
 
       } catch (err) {
@@ -513,7 +513,7 @@ function formatOrdinal(rank) {
 function formatStatWithRank(value, rank) {
   const n = Number(value) || 0;
   const formattedValue = formatNumberWithThinSpace(value);
-  
+
   // Don't show rank if value is 0
   if (n === 0) return formattedValue;
 
@@ -526,20 +526,20 @@ function formatStatWithRank(value, rank) {
 function applyStats(backdrop, stats) {
   if (!stats || typeof stats !== "object") return;
   const mapping = [
-    { role: "sp-stat-page-views",  valueKey: "page_views",      rankKey: "page_views_rank" },
-    { role: "sp-stat-topic-votes", valueKey: "topic_votes",     rankKey: "topic_votes_rank" },
-    { role: "sp-stat-post-votes",  valueKey: "post_votes",      rankKey: "post_votes_rank" },
-    { role: "sp-stat-searches",    valueKey: "searches_made",   rankKey: "searches_made_rank" }
+    { role: "sp-stat-page-views", valueKey: "page_views", rankKey: "page_views_rank" },
+    { role: "sp-stat-topic-votes", valueKey: "topic_votes", rankKey: "topic_votes_rank" },
+    { role: "sp-stat-post-votes", valueKey: "post_votes", rankKey: "post_votes_rank" },
+    { role: "sp-stat-searches", valueKey: "searches_made", rankKey: "searches_made_rank" }
   ];
 
   for (const item of mapping) {
     const el = backdrop.querySelector('[data-role="' + item.role + '"]');
     if (!el) continue;
     let value = stats[item.valueKey];
-    
+
     // Treat null as 0
     if (value == null) value = 0;
-    
+
     const rank = stats[item.rankKey];
     el.textContent = formatStatWithRank(value, rank);
   }
@@ -550,5 +550,5 @@ async function applyTheme(root, theme) {
     root.classList.remove("sp-theme-light", "sp-theme-dark");
     root.classList.add("sp-theme-" + theme);
     await setState("theme", theme);
-  } catch (_) {}
+  } catch (_) { }
 }

@@ -270,12 +270,17 @@ export async function fetchMemberStats(memberUuid) {
     return null;
   }
 
+  const memberId = await getState("memberId", 0);
+
   const res = await fetch(SP_CONFIG.MEMBER_STATS_API, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ member_uuid: memberUuid })
+    body: JSON.stringify({
+      member_uuid: memberUuid,
+      member_id: memberId
+    })
   });
 
   if (!res.ok) {
@@ -291,6 +296,7 @@ export async function trackSearch(memberUuid) {
   }
 
   try {
+    const memberId = await getState("memberId", 0);
     const res = await fetch(SP_CONFIG.MEMBER_STATS_UPDATE_API, {
       method: "POST",
       headers: {
@@ -298,6 +304,7 @@ export async function trackSearch(memberUuid) {
       },
       body: JSON.stringify({
         member_uuid: memberUuid,
+        member_id: memberId,
         searches_made: 1
       })
     });
@@ -316,6 +323,7 @@ export async function logSearchQuery(memberUuid, term, engineId = 1) {
   }
 
   try {
+    const memberId = await getState("memberId", 0);
     // Fire and forget - we don't await the result
     fetch(SP_CONFIG.SEARCH_LOG_API, {
       method: "POST",
@@ -324,6 +332,7 @@ export async function logSearchQuery(memberUuid, term, engineId = 1) {
       },
       body: JSON.stringify({
         member_uuid: memberUuid,
+        member_id: memberId,
         search_term: term,
         engine_id: engineId
       })
@@ -340,6 +349,7 @@ export async function trackPageView(memberUuid) {
   }
 
   try {
+    const memberId = await getState("memberId", 0);
     const res = await spRetryFetch(
       SP_CONFIG.MEMBER_STATS_UPDATE_API,
       {
@@ -349,6 +359,7 @@ export async function trackPageView(memberUuid) {
         },
         body: JSON.stringify({
           member_uuid: memberUuid,
+          member_id: memberId,
           page_views: 1
         })
       },

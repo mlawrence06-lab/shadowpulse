@@ -28,9 +28,57 @@ try {
     }
     $pdo = sp_get_pdo();
 
-    // 4. Serve Data (READ ONLY)
+    // 4. CHECK IF DATA IS STALE (OLDER THAN 5 MINS)
+    $stmtLast = $pdo->prepare("SELECT candle_time FROM btc_price_history WHERE symbol = :s ORDER BY candle_time DESC LIMIT 1");
+    $stmtLast->execute([':s' => $symbol]);
+    $lastRow = $stmtLast->fetch(PDO::FETCH_ASSOC);
+
+    $isStale = true;
+    if ($lastRow && isset($lastRow['candle_time'])) {
+        $lastTime = strtotime($lastRow['candle_time']);
+        if (time() - $lastTime < 300) { // 5 minutes
+            $isStale = false;
+        }
+    }
+
+    if ($isStale) {
+        // FETCH FROM BINANCE (Limit 60 candles, 1m interval)
+        $url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $json = curl_exec($ch);
+        curl_close($ch);
+
+        $data = json_decode($json, true);
+        if (is_array($data) && count($data) > 0) {
+            // Insert/Update DB
+            $stmtInsert = $pdo->prepare("
+                INSERT IGNORE INTO btc_price_history (symbol, candle_time, open_price, high_price, low_price, close_price, volume)
+                VALUES (:sym, :time, :open, :high, :low, :close, :vol)
+            ");
+
+            foreach ($data as $candle) {
+                // Binance format: [time, open, high, low, close, vol, ...]
+                // Time is ms timestamp
+                $ts = $candle[0] / 1000;
+                $dt = date('Y-m-d H:i:s', $ts);
+
+                $stmtInsert->execute([
+                    ':sym' => $symbol,
+                    ':time' => $dt,
+                    ':open' => $candle[1],
+                    ':high' => $candle[2],
+                    ':low' => $candle[3],
+                    ':close' => $candle[4],
+                    ':vol' => $candle[5]
+                ]);
+            }
+        }
+    }
+
+    // 5. Serve Data (Now Guaranteed Fresh-ish)
     // We fetch the last 60 minutes of data stored in the database.
-    // If the database is not updated manually/externally, this data will get stale.
     $stmtGet = $pdo->prepare("
         SELECT close_price, open_price 
         FROM (
@@ -63,7 +111,8 @@ try {
         $trend = ($price >= $start) ? 'up' : 'down';
 
         $history = array_map(function ($r) {
-            return (float) $r['close_price']; }, $rows);
+            return (float) $r['close_price'];
+        }, $rows);
 
         $responsePayload = [
             'price_val' => $price,

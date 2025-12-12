@@ -1,0 +1,34 @@
+Vote Payload: Array
+(
+    [member_uuid] => d12e9e3b-87af-4909-b99c-2b50cfc9c6fd
+    [vote_category] => post
+    [target_id] => 3343445
+    [desired_value] => 1
+    [context_topic_id] => 309785
+)
+
+Post Metadata: Target=3343445, Hint=, Fetch=0
+No Topic Hint provided. Skipping Post Metadata.
+Vote Payload: Array
+(
+    [member_uuid] => d12e9e3b-87af-4909-b99c-2b50cfc9c6fd
+    [vote_category] => post
+    [target_id] => 3354474
+    [desired_value] => 2
+    [context_topic_id] => 309785
+)
+
+Post Metadata: Target=3354474, Hint=309785, Fetch=309785
+Fetching Topic List: https://api.ninjastic.space/posts?topic_id=309785&limit=50
+API Success. Found 50 posts. Searching for 3354474...
+Post not found in list. Fallback to Board=24
+Inserted Post SQL Executed.
+Vote Payload: Array
+(
+    [member_uuid] => d12e9e3b-87af-4909-b99c-2b50cfc9c6fd
+    [vote_category] => post
+    [target_id] => 3350953
+    [desired_value] => 2
+    [context_topic_id] => 309785
+)
+
