@@ -18,11 +18,6 @@ export function createVotesZone(onVoteSelected, voteContext) {
   const zone = createEl("div", ["sp-zone", "sp-zone-votes"]);
   const ctx = voteContext || { kind: "unknown" };
 
-  // FEATURE REMOVED: Post voting disabled due to API limitations
-  if (ctx.kind === 'post') {
-    return { zone: null, buttons: [], summaryEl: null };
-  }
-
   const buttons = [];
   let summaryEl = null;
 

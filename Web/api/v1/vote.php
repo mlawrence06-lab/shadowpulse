@@ -61,11 +61,6 @@ if ($desiredValue < 1 || $desiredValue > 5) {
     exit;
 }
 
-if ($voteCategory === 'post') {
-    echo json_encode(['error' => 'Post voting is disabled']);
-    exit;
-}
-
 require __DIR__ . '/../../config/db.php';
 
 try {

@@ -145,8 +145,12 @@ function buildToolbar(root, voteContext) {
   votesZone = createdVotes.zone;
   voteButtons = createdVotes.buttons;
   votesSummary = createdVotes.summaryEl;
-  if (canVote) {
+  if (canVote && votesZone) {
     votesZone.classList.add("sp-zone-loading");
+  } else if (!votesZone) {
+    // Fallback: Create dummy element to prevent appendChild errors later
+    votesZone = document.createElement('div');
+    votesZone.style.display = 'none';
   }
 
 
