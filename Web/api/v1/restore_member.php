@@ -23,7 +23,7 @@ try {
     }
 
     // Direct Lookup: Treat the input code as the member_uuid
-    $stmt = $pdo->prepare("SELECT member_id, member_uuid, restore_ack, pref_theme, pref_search, pref_btc_source FROM members WHERE member_uuid = ?");
+    $stmt = $pdo->prepare("SELECT member_id, member_uuid, custom_name, restore_ack, pref_theme, pref_search, pref_btc_source FROM members WHERE member_uuid = ?");
     $stmt->execute([$code]);
     $member = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -32,6 +32,7 @@ try {
         echo json_encode([
             'member_id' => (int) $member['member_id'],
             'member_uuid' => $member['member_uuid'],
+            'custom_name' => $member['custom_name'], // Added custom_name
             'restore_ack' => (bool) $member['restore_ack'],
             'prefs' => [
                 'theme' => $member['pref_theme'] ?? 'light',

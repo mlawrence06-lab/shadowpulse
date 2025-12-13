@@ -19,10 +19,11 @@
 
 declare(strict_types=1);
 
+require __DIR__ . '/cors.php';
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+
+// Session Start for cache invalidation
+session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -46,7 +47,7 @@ if (!is_array($data)) {
 
 $memberUuid = isset($data['member_uuid']) ? trim((string) $data['member_uuid']) : '';
 $voteCategory = isset($data['vote_category']) ? trim((string) $data['vote_category']) : '';
-$targetId = isset($data['target_id']) ? (int) $data['target_id'] : 0;
+$targetId = isset($_GET['target_id']) ? (int) $_GET['target_id'] : (isset($data['target_id']) ? (int) $data['target_id'] : 0);
 $desiredValue = isset($data['desired_value']) ? (int) $data['desired_value'] : 0;
 
 if ($memberUuid === '' || $targetId <= 0) { // Validate input ranges
@@ -109,6 +110,14 @@ try {
 
     $effectiveValue = (int) $outRow['effective_value'];
 
+    // --- SESSION CACHE INVALIDATION ---
+    // If the user voted, invalid their get_vote cache for this item
+    $cacheKey = "sp_vote_{$memberUuid}_{$voteCategory}_{$targetId}";
+    if (isset($_SESSION[$cacheKey])) {
+        unset($_SESSION[$cacheKey]);
+    }
+    // ----------------------------------
+
     echo json_encode([
         'ok' => true,
         'effective_value' => $effectiveValue,
@@ -125,3 +134,4 @@ try {
         'message' => $e->getMessage(),
     ]);
 }
+?>

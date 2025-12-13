@@ -77,7 +77,7 @@ export async function fetchBitcoinStats() {
 
     // Add cache buster to prevent browser caching of the JSON
     const url = `${SP_CONFIG.GET_STATS_API}?t=${Date.now()}`;
-    const res = await fetch(url);
+    const res = await spRetryFetch(url, {}, "fetchBitcoinStats");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
 
@@ -115,7 +115,9 @@ export async function fetchVoteSummary(voteContext) {
     const cat = voteContext.voteCategory || "topic";
     const tid = voteContext.targetId || 0;
     const CACHE_KEY = `sp_vote_${cat}_${tid}`;
-    const CACHE_TTL = 20 * 1000; // 20 seconds (ensure it expires before 30s poll)
+    // User Requested: Refresh at least once per 30 seconds.
+    // Set to 30s to match polling interval and prevent hammering.
+    const CACHE_TTL = 30 * 1000; // 30 seconds
 
     // Check cache
     try {
@@ -136,7 +138,7 @@ export async function fetchVoteSummary(voteContext) {
     url.searchParams.append("target_id", voteContext.targetId || 0);
     url.searchParams.append("t", Date.now()); // Cache buster
 
-    const res = await fetch(url.toString());
+    const res = await spRetryFetch(url.toString(), {}, "fetchVoteSummary");
     if (!res.ok) return null;
 
     const json = await res.json();
@@ -187,13 +189,17 @@ export async function submitVote(value, voteContext) {
     };
 
     // 4. Send Request
-    const res = await fetch(SP_CONFIG.VOTE_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+    const res = await spRetryFetch(
+      SP_CONFIG.VOTE_API,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
       },
-      body: JSON.stringify(payload)
-    });
+      "submitVote()"
+    );
 
     if (!res.ok) {
       spLog("submitVote() failed with status", res.status);

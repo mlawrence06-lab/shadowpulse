@@ -1,0 +1,5 @@
+open ftp.cluster051.hosting.ovh.net
+bxzziug
+W3YfFZhknNwR9jeD6VDN
+dir
+quit

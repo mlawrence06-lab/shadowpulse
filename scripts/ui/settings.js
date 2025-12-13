@@ -188,6 +188,7 @@ function buildSettingsModal(root) {
   nameInput.style.minWidth = "0";
   // Light Gray Background to match dropdowns (user request)
   nameInput.style.backgroundColor = "rgba(0,0,0,0.05)";
+  nameInput.style.color = "var(--sp-text)"; // Use Theme Variable (Black in Light, White in Dark)
   nameInput.style.border = "1px solid var(--sp-border)";
 
   const applyBtn = createEl("button", ["sp-settings-button"]);
@@ -370,10 +371,21 @@ function buildSettingsModal(root) {
   globalRow.style.marginTop = "15px";
 
   const globalLink = createEl("a", ["sp-settings-link"]);
-  globalLink.href = "https://vod.fan/shadowpulse/website/globalstats.php";
+  globalLink.textContent = "Vote Pyramid";
   globalLink.target = "_blank";
   globalLink.rel = "noopener noreferrer";
-  globalLink.textContent = "Global Stats";
+
+  // Default to base URL
+  const reportBaseUrl = "https://vod.fan/shadowpulse/website/reports/pyramid.php";
+  globalLink.href = reportBaseUrl;
+
+  // Asynchronously append UUID if available
+  getState("memberUuid", null).then(uuid => {
+    if (uuid) {
+      globalLink.href = reportBaseUrl + "?uuid=" + uuid;
+    }
+  });
+
   globalRow.appendChild(globalLink);
   statsBlock.appendChild(globalRow);
 
@@ -574,10 +586,18 @@ function applyMemberIdentity(backdrop, memberId, memberUuid, restoreAck) {
 
           await setMemberUuid(info.member_uuid);
           await setState("memberUuid", info.member_uuid);
+          await setState("memberUuid", info.member_uuid);
           await setState("memberId", info.member_id || 0);
 
+          if (info.custom_name) {
+            await chrome.storage.local.set({ custom_name: info.custom_name });
+          }
+
           if (info.prefs) {
-            if (info.prefs.theme) await setState("theme", info.prefs.theme);
+            if (info.prefs.theme) {
+              await setState("theme", info.prefs.theme);
+              await applyTheme(root, info.prefs.theme); // Apply Immediately
+            }
             if (info.prefs.search) await setState("searchEngine", info.prefs.search);
             if (info.prefs.btc_source) await setState("btcSource", info.prefs.btc_source);
           }

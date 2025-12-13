@@ -1,22 +1,48 @@
 ---
-description: Deploy website files to the server
+description: Deploy website files to the server using Curl (FTP)
 ---
 # Deployment Workflow
 
-This workflow uploads the local `Web` directory to the remote server using `scp`.
+This workflow uploads local files to the remote server using `curl.exe` with FTP. This is the **proven method** for this environment.
 
-**Prerequisite:** You should have SSH Key authentication set up for `bxzziug@vod.fan` to avoid typing the password every time.
+**Credentials:**
+- **User:** `bxzziug`
+- **Pass:** `W3YfFZhknNwR9jeD6VDN`
+- **Host:** `ftp.cluster051.hosting.ovh.net`
+- **Remote Base:** `/vod.fan/shadowpulse/`
 
-## 1. Upload Files
-// turbo
-```bash
-cd Web
-scp -i ..\.agent\ssh\shadowpulse_key -r . bxzziug@ssh.cluster051.hosting.ovh.net:/home/bxzziug/vod.fan/shadowpulse/
+## 1. Deploy Single File
+Use this pattern to upload a single file. Replace `[LOCAL_REL_PATH]` and `[REMOTE_REL_PATH]` accordingly.
+
+```powershell
+curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" --ftp-create-dirs -T [LOCAL_PATH] ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/[REMOTE_PATH]
 ```
 
-```bash
-ssh -i ..\.agent\ssh\shadowpulse_key bxzziug@ssh.cluster051.hosting.ovh.net "chmod -R 755 /home/bxzziug/vod.fan/shadowpulse/ && find /home/bxzziug/vod.fan/shadowpulse/ -type f -exec chmod 644 {} \;"
+### Examples
+
+**Deploy Reports Index:**
+```powershell
+curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/website/reports/index.php ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/website/reports/index.php
 ```
 
-## 2. Confirmation
-User: Deployment complete.
+**Deploy API Endpoint:**
+```powershell
+curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/api/v1/vote_pyramid.php ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/api/v1/vote_pyramid.php
+```
+
+## 2. Deploy Multiple Files (Manual Batches)
+For multiple files, execute sequential curl commands.
+
+```powershell
+curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/website/reports/pyramid.php ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/website/reports/pyramid.php
+curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/website/shadowpulse.css ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/website/shadowpulse.css
+```
+
+> **Note:** Always use `curl.exe` (explicit executable) to avoid PowerShell alias conflicts.
+
+## 3. Extension Versioning Strategy
+**Rule:** Whenever the **Extension Code** (manifest, JS, CSS) is modified, you **MUST** increment the **patch version** in `manifest.json`.
+
+- Example: `0.30.0` → `0.30.1`
+- Exception: Only skip if the user explicitly says "do not bump version".
+- Sync: Ensure the `settings.js` or UI references to version match if they are hardcoded (though they should rely on `runtime.getManifest()`).

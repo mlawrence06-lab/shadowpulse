@@ -1,0 +1,10 @@
+cd /home/bxzziug/vod.fan/shadowpulse/website
+put Web/website/header.php
+cd reports
+put Web/website/reports/index.php
+put Web/website/reports/ranking.php
+put Web/website/reports/boards.php
+put Web/website/reports/posts.php
+put Web/website/reports/topics.php
+put Web/website/reports/profiles.php
+bye

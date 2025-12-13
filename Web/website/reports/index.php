@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../api/v1/cors.php';
 $pageTitle = "Reports Home";
 $pageSubtitle = "Analytics & Data Exports";
 
-include __DIR__ . '/header.php';
+include __DIR__ . '/../header.php';
 ?>
 
 <section class="content">
@@ -69,9 +69,35 @@ include __DIR__ . '/header.php';
                     Member profiles receiving the most views.
                 </div>
                 <div class="result-snippet">
-                    See which users are checked the most, by rank, role, or recent activity.
+                    See which users are checked the most, by rank, role, or user activity.
                 </div>
             </li>
+
+            <li class="result-item">
+                <div class="result-title">
+                    <a href="ranking.php">Ranking Reports</a>
+                </div>
+                <div class="result-meta">
+                    Top ranked members by views, searches, votes, and installs.
+                </div>
+                <div class="result-snippet">
+                    Visual ranking reports using charts and grids.
+                </div>
+            </li>
+
+            <li class="result-item">
+                <div class="result-title">
+                    <a href="top_charts.php">Top Charts</a>
+                </div>
+                <div class="result-meta">
+                    Highest rated Members, Boards, Topics, and Posts.
+                </div>
+                <div class="result-snippet">
+                    Leaderboards sorted by Average Score (Votes).
+                </div>
+            </li>
+
+
         </ul>
     </div>
 </section>
@@ -88,4 +114,4 @@ include __DIR__ . '/header.php';
     </div>
 </aside>
 
-<?php include __DIR__ . '/footer.php'; ?>
+<?php include __DIR__ . '/../footer.php'; ?>

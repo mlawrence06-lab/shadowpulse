@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../api/v1/cors.php';
 $pageTitle = "Most Visited Boards";
 $pageSubtitle = "Board‑level view analytics";
 
-include __DIR__ . '/header.php';
+include __DIR__ . '/../header.php';
 ?>
 
 <section class="content">
@@ -48,4 +48,4 @@ include __DIR__ . '/header.php';
     </div>
 </aside>
 
-<?php include __DIR__ . '/footer.php'; ?>
+<?php include __DIR__ . '/../footer.php'; ?>
