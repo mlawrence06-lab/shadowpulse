@@ -1,2 +1,0 @@
-Added topic_title
-Added author_name
