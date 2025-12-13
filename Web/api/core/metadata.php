@@ -13,55 +13,91 @@ function ensure_content_metadata($category, $target_id, $pdo, $topicIdHint = 0)
 
     $api_hit = false;
     $lookupTopicId = 0;
+    $lookupPostId = 0;
 
-    // Determine what Topic ID to lookup metadata for
+    // Determine what we are looking up
     if ($category === 'topic') {
-        // If voting on a topic, the target is the topic
         $lookupTopicId = $target_id;
     } elseif ($category === 'post') {
-        // If voting on a post, we need the Topic ID hint to fetch metadata
-        if ($topicIdHint > 0) {
-            $lookupTopicId = $topicIdHint;
-        } else {
-            return ['api_hit' => false, 'reason' => 'Post vote without topic hint'];
-        }
+        $lookupPostId = $target_id;
+        // We might validly have a topic hint, but we prioritize looking up the post itself if possible.
+        // However, if we need Topic Info, we might need a separate call or the Post response includes it.
     } else {
         return ['api_hit' => false, 'reason' => 'Not handled category'];
     }
 
-    // 1. Check if metadata for this Target ID (post or topic) already exists
-    // (We link the Target ID to the Metadata fields)
+    // 1. Check if metadata exists
     $stmt = $pdo->prepare("SELECT id FROM content_metadata WHERE " . ($category === 'post' ? 'post_id' : 'topic_id') . " = ?");
     $stmt->execute([$target_id]);
     if ($stmt->fetch()) {
         return ['api_hit' => false, 'reason' => 'Already exists'];
     }
 
-    // 2. Fetch Metadata from Ninja API using the TOPIC ID
-    // (Even for a post, we fetch the Topic info to get Board/Title)
-    $url = "https://api.ninjastic.space/posts?topic_id=" . intval($lookupTopicId) . "&limit=1";
+    // 2. Fetch Metadata from Ninja API
+    // If it's a POST vote, we query by ID to get the specific post (and its author).
+    // If it's a TOPIC vote, we query by TOPIC_ID.
+
+    $url = "";
+    if ($category === 'post') {
+        // Correct endpoint for specific post: https://api.ninjastic.space/posts/XYZ
+        $url = "https://api.ninjastic.space/posts/" . intval($lookupPostId);
+    } else {
+        $url = "https://api.ninjastic.space/posts?topic_id=" . intval($lookupTopicId) . "&limit=1&order=created_at&sort=asc";
+    }
+
     $data = fetch_json_via_curl($url);
 
     $board_id = 0;
-    $author_id = 0; // OP of the topic (or author of the post? Ideally author of the post if we could look it up)
+    $author_id = 0;
     $topic_title = null;
     $author_name = null;
+    $derivedTopicId = 0;
 
-    if (isset($data['result']) && $data['result'] === 'success' && !empty($data['data']['posts'])) {
-        $post = $data['data']['posts'][0];
-        $board_id = isset($post['board_id']) ? (int) $post['board_id'] : 0;
+    if (isset($data['result']) && $data['result'] === 'success') {
+        $post = null;
+        if ($category === 'post' && !empty($data['data'])) {
+            // For /posts/ID, data is the array of posts directly
+            $post = is_array($data['data']) && isset($data['data'][0]) ? $data['data'][0] : null;
+        } elseif ($category === 'topic' && !empty($data['data']['posts'])) {
+            // For /posts?topic_id=..., data['posts'] is the array
+            $post = $data['data']['posts'][0];
+        }
 
-        // Note: For Post votes, we ideally want the Post Author.
-        // But since we are querying by Topic ID, we get the Topic OP.
-        // This is a limitation without a Post Lookup API.
-        // However, we CAN capture the Topic Title and Board ID correctly.
-        $author_id = isset($post['author_uid']) ? (int) $post['author_uid'] : 0;
+        if ($post) {
+            $board_id = isset($post['board_id']) ? (int) $post['board_id'] : 0;
+            $author_id = isset($post['author_uid']) ? (int) $post['author_uid'] : 0;
 
-        // Capture Names
-        if (isset($post['subject']))
-            $topic_title = strip_tags($post['subject']);
-        if (isset($post['author']))
-            $author_name = strip_tags($post['author']);
+            // For 'post' lookups, the Ninja API response might contain the topic_id
+            if (isset($post['topic_id'])) {
+                $derivedTopicId = (int) $post['topic_id'];
+            }
+
+            // Capture Names
+            if (isset($post['subject'])) {
+                $rawTitle = strip_tags($post['subject']);
+                // Remove "Re: " prefix if present (case-insensitive)
+                $topic_title = preg_replace('/^Re:\s*/i', '', $rawTitle);
+            }
+            if (isset($post['author']))
+                $author_name = strip_tags($post['author']);
+        }
+    }
+
+    // Fallback if API didn't give topic_id (which it should)
+    if ($derivedTopicId === 0 && $topicIdHint > 0) {
+        $derivedTopicId = $topicIdHint;
+    }
+
+    if ($board_id > 0) {
+        if ($category === 'topic') {
+            $stmt = $pdo->prepare("INSERT IGNORE INTO content_metadata (topic_id, board_id, author_id, topic_title, author_name) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$target_id, $board_id, $author_id, $topic_title, $author_name]);
+        } elseif ($category === 'post') {
+            // For post, we save post_id AND the linked topic_id
+            $stmt = $pdo->prepare("INSERT IGNORE INTO content_metadata (post_id, topic_id, board_id, author_id, topic_title, author_name) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$target_id, $derivedTopicId, $board_id, $author_id, $topic_title, $author_name]);
+        }
+        return ['api_hit' => true, 'category' => $category, 'derived_topic' => $derivedTopicId];
     }
 
     if ($board_id > 0) {

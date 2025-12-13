@@ -11,68 +11,12 @@ include __DIR__ . '/../header.php';
     <div class="content-header">
         <div class="content-title">Reports Center</div>
         <div class="content-subtitle">
-            Most visited: Boards, Topics, Posts, Profiles
+
         </div>
     </div>
 
     <div class="content-body">
-        <p class="hint">
-            Most visited:
-            <a href="boards.php">Boards</a>,
-            <a href="topics.php">Topics</a>,
-            <a href="posts.php">Posts</a>,
-            <a href="profiles.php">Profiles</a>
-        </p>
-
         <ul class="result-list">
-            <li class="result-item">
-                <div class="result-title">
-                    <a href="boards.php">Most visited boards</a>
-                </div>
-                <div class="result-meta">
-                    Ranking of boards by total visits / page views.
-                </div>
-                <div class="result-snippet">
-                    Show which Bitcointalk boards receive the most attention over a selected time range.
-                </div>
-            </li>
-
-            <li class="result-item">
-                <div class="result-title">
-                    <a href="topics.php">Most visited topics</a>
-                </div>
-                <div class="result-meta">
-                    Leaderboard of high‑traffic discussion threads.
-                </div>
-                <div class="result-snippet">
-                    Highlight trending and historically popular topics, sorted by view counts or custom metrics.
-                </div>
-            </li>
-
-            <li class="result-item">
-                <div class="result-title">
-                    <a href="posts.php">Most visited posts</a>
-                </div>
-                <div class="result-meta">
-                    Individual posts with exceptional visit volumes.
-                </div>
-                <div class="result-snippet">
-                    Surface posts that attract repeated attention, bookmarks, or off‑site referrals.
-                </div>
-            </li>
-
-            <li class="result-item">
-                <div class="result-title">
-                    <a href="profiles.php">Most visited profiles</a>
-                </div>
-                <div class="result-meta">
-                    Member profiles receiving the most views.
-                </div>
-                <div class="result-snippet">
-                    See which users are checked the most, by rank, role, or user activity.
-                </div>
-            </li>
-
             <li class="result-item">
                 <div class="result-title">
                     <a href="ranking.php">Ranking Reports</a>
@@ -97,7 +41,55 @@ include __DIR__ . '/../header.php';
                 </div>
             </li>
 
+            In Development:
 
+            <li class="result-item">
+                <div class="result-title">
+                    Most visited boards
+                </div>
+                <div class="result-meta">
+                    Ranking of boards by total visits / page views.
+                </div>
+                <div class="result-snippet">
+                    Show which Bitcointalk boards receive the most attention over a selected time range.
+                </div>
+            </li>
+
+            <li class="result-item">
+                <div class="result-title">
+                    Most visited topics
+                </div>
+                <div class="result-meta">
+                    Leaderboard of high‑traffic discussion threads.
+                </div>
+                <div class="result-snippet">
+                    Highlight trending and historically popular topics, sorted by view counts or custom metrics.
+                </div>
+            </li>
+
+            <li class="result-item">
+                <div class="result-title">
+                    Most visited posts
+                </div>
+                <div class="result-meta">
+                    Individual posts with exceptional visit volumes.
+                </div>
+                <div class="result-snippet">
+                    Surface posts that attract repeated attention, bookmarks, or off‑site referrals.
+                </div>
+            </li>
+
+            <li class="result-item">
+                <div class="result-title">
+                    Most visited profiles
+                </div>
+                <div class="result-meta">
+                    Member profiles receiving the most views.
+                </div>
+                <div class="result-snippet">
+                    See which users are checked the most, by rank, role, or user activity.
+                </div>
+            </li>
         </ul>
     </div>
 </section>

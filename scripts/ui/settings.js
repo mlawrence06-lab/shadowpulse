@@ -371,7 +371,7 @@ function buildSettingsModal(root) {
   globalRow.style.marginTop = "15px";
 
   const globalLink = createEl("a", ["sp-settings-link"]);
-  globalLink.textContent = "Vote Pyramid";
+  globalLink.textContent = "Vote Diagnostics";
   globalLink.target = "_blank";
   globalLink.rel = "noopener noreferrer";
 

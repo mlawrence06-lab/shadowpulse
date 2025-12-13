@@ -18,7 +18,7 @@ try {
         case 'members':
             // "Members" (Bitcointalk Authors) by Average Post Score
             $stmt = $pdo->prepare("
-                SELECT cm.author_id, COUNT(*) as vote_count, AVG(CAST(v.effective_value AS DECIMAL(10,4))) as avg_score
+                SELECT cm.author_id, MAX(cm.author_name) as author_name, COUNT(*) as vote_count, AVG(CAST(v.effective_value AS DECIMAL(10,4))) as avg_score
                 FROM votes v
                 JOIN content_metadata cm ON v.target_id = cm.post_id
                 WHERE v.vote_category = 'post'
@@ -31,9 +31,10 @@ try {
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($rows as $r) {
+                $name = !empty($r['author_name']) ? $r['author_name'] : ("User " . $r['author_id']);
                 $data[] = [
                     'id' => (int) $r['author_id'],
-                    'label' => (string) $r['author_id'],
+                    'label' => (string) $name,
                     'count' => (int) $r['vote_count'],
                     'avg' => round((float) $r['avg_score'], 2)
                 ];
@@ -274,10 +275,11 @@ try {
         case 'topics':
             // Top Topics by Avg Score
             $stmt = $pdo->prepare("
-                SELECT target_id, COUNT(*) as vote_count, AVG(CAST(effective_value AS DECIMAL(10,4))) as avg_score
-                FROM votes
-                WHERE vote_category = 'topic'
-                GROUP BY target_id
+                SELECT v.target_id, MAX(cm.topic_title) as topic_title, COUNT(*) as vote_count, AVG(CAST(v.effective_value AS DECIMAL(10,4))) as avg_score
+                FROM votes v
+                LEFT JOIN content_metadata cm ON v.target_id = cm.topic_id
+                WHERE v.vote_category = 'topic'
+                GROUP BY v.target_id
                 ORDER BY avg_score DESC
                 LIMIT ?
             ");
@@ -285,9 +287,10 @@ try {
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($rows as $r) {
+                $label = !empty($r['topic_title']) ? $r['topic_title'] : ("Topic " . $r['target_id']);
                 $data[] = [
                     'id' => (int) $r['target_id'],
-                    'label' => "Topic " . $r['target_id'],
+                    'label' => $label,
                     'count' => (int) $r['vote_count'],
                     'avg' => round((float) $r['avg_score'], 2)
                 ];
@@ -297,7 +300,7 @@ try {
         case 'posts':
             // Top Posts by Avg Score WITH Author ID
             $stmt = $pdo->prepare("
-                SELECT v.target_id, cm.author_id, COUNT(*) as vote_count, AVG(CAST(v.effective_value AS DECIMAL(10,4))) as avg_score
+                SELECT v.target_id, cm.author_id, MAX(cm.author_name) as author_name, MAX(cm.topic_id) as topic_id, COUNT(*) as vote_count, AVG(CAST(v.effective_value AS DECIMAL(10,4))) as avg_score
                 FROM votes v
                 LEFT JOIN content_metadata cm ON v.target_id = cm.post_id
                 WHERE v.vote_category = 'post'
@@ -310,13 +313,18 @@ try {
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($rows as $r) {
                 $label = "Post " . $r['target_id'];
-                if (!empty($r['author_id'])) {
+
+                // Use Name if available, otherwise ID, otherwise nothing
+                if (!empty($r['author_name'])) {
+                    $label .= " (" . $r['author_name'] . ")";
+                } elseif (!empty($r['author_id'])) {
                     $label .= " (" . $r['author_id'] . ")";
                 }
 
                 $data[] = [
                     'id' => (int) $r['target_id'],
                     'label' => $label,
+                    'topic_id' => isset($r['topic_id']) ? (int) $r['topic_id'] : 0,
                     'count' => (int) $r['vote_count'],
                     'avg' => round((float) $r['avg_score'], 2)
                 ];

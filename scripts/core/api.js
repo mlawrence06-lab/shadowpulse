@@ -113,7 +113,8 @@ export async function fetchVoteSummary(voteContext) {
 
     // Construct cache key based on context
     const cat = voteContext.voteCategory || "topic";
-    const tid = voteContext.targetId || 0;
+    const rawTid = voteContext.targetId ? Number(voteContext.targetId) : 0;
+    const tid = isNaN(rawTid) ? 0 : rawTid;
     const CACHE_KEY = `sp_vote_${cat}_${tid}`;
     // User Requested: Refresh at least once per 30 seconds.
     // Set to 30s to match polling interval and prevent hammering.
@@ -183,7 +184,7 @@ export async function submitVote(value, voteContext) {
     const payload = {
       member_uuid: memberUuid,
       vote_category: voteContext && voteContext.voteCategory ? voteContext.voteCategory : "topic",
-      target_id: voteContext && typeof voteContext.targetId === "number" ? voteContext.targetId : 0,
+      target_id: voteContext && voteContext.targetId ? Number(voteContext.targetId) : 0,
       desired_value: Number(value),
       context_topic_id: voteContext && voteContext.topicId ? Number(voteContext.topicId) : 0
     };
@@ -211,9 +212,11 @@ export async function submitVote(value, voteContext) {
     // 5a. CRITICAL: Invalidate Cache for this topic so immediate re-fetch gets fresh data
     try {
       const cat = voteContext && voteContext.voteCategory ? voteContext.voteCategory : "topic";
-      const tid = voteContext && typeof voteContext.targetId === "number" ? voteContext.targetId : 0;
+      const val = voteContext && voteContext.targetId ? Number(voteContext.targetId) : 0;
+      const tid = isNaN(val) ? 0 : val;
       const CACHE_KEY = `sp_vote_${cat}_${tid}`;
       localStorage.removeItem(CACHE_KEY);
+      // spLog("[ShadowPulse] Invalidated cache for", CACHE_KEY);
     } catch (e) { /* ignore */ }
 
     // 5. Parse Response (Structure: { ok: true, effective_value: X })

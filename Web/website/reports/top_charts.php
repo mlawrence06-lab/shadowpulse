@@ -12,7 +12,11 @@ include __DIR__ . '/../header.php';
 
 <style>
     /* Dark Theme Override */
-    body { background-color: #121212; color: #ffffff; }
+    body {
+        background-color: #121212;
+        color: #ffffff;
+    }
+
     .content-body {
         background-color: #1e1e1e;
         padding: 20px;
@@ -20,14 +24,16 @@ include __DIR__ . '/../header.php';
         width: 100%;
         box-sizing: border-box;
     }
-    
+
     /* Dashboard Grid Layout (2x2) */
     .dashboard-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Two Columns */
+        grid-template-columns: 1fr 1fr;
+        /* Two Columns */
         gap: 20px;
         width: 100%;
-        max-width: 1400px; /* Constrain max width */
+        max-width: 1400px;
+        /* Constrain max width */
         margin: 0 auto;
     }
 
@@ -50,26 +56,30 @@ include __DIR__ . '/../header.php';
         border-bottom: 1px solid #444;
         padding-bottom: 5px;
     }
-    
+
     /* Link Styling */
     .chart-link {
         color: #4ade80;
         text-decoration: none;
     }
+
     .chart-link:hover {
         text-decoration: underline;
     }
 
     /* Responsive: Stack on mobile */
     @media (max-width: 1000px) {
-        .dashboard-grid { grid-template-columns: 1fr; }
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
     }
-    
+
     /* OVERRIDE GLOBAL LAYOUT FOR THIS PAGE TO ALLOW FULL WIDTH */
     .site-main {
         display: block !important;
         width: 100% !important;
     }
+
     .content {
         width: 95% !important;
         margin: 0 auto;
@@ -84,7 +94,7 @@ include __DIR__ . '/../header.php';
 
     <div class="content-body">
         <div class="dashboard-grid">
-            
+
             <!-- 1. Top Members -->
             <div class="chart-card">
                 <div class="card-title">Top Members (Avg Post Score)</div>
@@ -136,7 +146,7 @@ include __DIR__ . '/../header.php';
             header: 'Topic',
             valHeader: 'Avg Score',
             valField: 'avg',
-            format: 'N2', 
+            format: 'N2',
             template: (props) => `<a href="https://bitcointalk.org/index.php?topic=${props.id}.0" target="_blank" class="chart-link">${props.label}</a>`
         },
         'posts': {
@@ -144,7 +154,14 @@ include __DIR__ . '/../header.php';
             valHeader: 'Avg Score',
             valField: 'avg',
             format: 'N2',
-            template: (props) => `<a href="https://bitcointalk.org/index.php?msg=${props.id}" target="_blank" class="chart-link">${props.label}</a>`
+            template: (props) => {
+                // If topic_id is available (and > 0), use the canonical format: topic=T.msgP#msgP
+                // Otherwise fall back to msg=P
+                if (props.topic_id && props.topic_id > 0) {
+                    return `<a href="https://bitcointalk.org/index.php?topic=${props.topic_id}.msg${props.id}#msg${props.id}" target="_blank" class="chart-link">${props.label}</a>`;
+                }
+                return `<a href="https://bitcointalk.org/index.php?msg=${props.id}" target="_blank" class="chart-link">${props.label}</a>`;
+            }
         }
     };
 
@@ -152,7 +169,7 @@ include __DIR__ . '/../header.php';
         fetch(`../../api/v1/top_lists.php?action=${action}&limit=50`)
             .then(r => r.json())
             .then(res => {
-                if(res.ok) {
+                if (res.ok) {
                     // Add Rank column locally
                     let data = res.data.map((item, index) => {
                         item.Rank = index + 1;
@@ -167,22 +184,22 @@ include __DIR__ . '/../header.php';
                         pageSettings: { pageSize: 10 },
                         columns: [
                             { field: 'Rank', headerText: '#', width: 50, textAlign: 'Center' },
-                            { 
-                                field: 'label', 
-                                headerText: config.header, 
+                            {
+                                field: 'label',
+                                headerText: config.header,
                                 width: 200,
                                 template: config.template // Hyperlink template
                             },
-                            { 
-                                field: config.valField, 
-                                headerText: config.valHeader, 
-                                width: 100, 
-                                textAlign: 'Center', 
-                                format: config.format 
+                            {
+                                field: config.valField,
+                                headerText: config.valHeader,
+                                width: 100,
+                                textAlign: 'Center',
+                                format: config.format
                             }
                         ]
                     });
-                    
+
                     grid.appendTo(targetId);
 
                 } else {

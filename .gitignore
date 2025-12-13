@@ -4,3 +4,14 @@ Thumbs.db
 *.key
 *.pub
 config/db.php
+
+# Deployment & Temp
+*.sftp
+*.zip
+*.log
+*.txt
+debug_*
+test_*
+counts_dump.txt
+meta_dump.txt
+schema_update_out.txt
