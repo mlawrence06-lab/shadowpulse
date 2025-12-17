@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "ShadowPulse",
-  "version": "0.31.3",
-  "version_name": "0.31.3 Beta 3 (Cache Fix)",
-  "description": "Voting implemented",
+  "version": "0.33.0",
+  "version_name": "0.33.0",
+  "description": "BitcoinTalk User Experience Enhancement Suite",
   "permissions": [
     "storage"
   ],

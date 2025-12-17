@@ -30,89 +30,73 @@ function ensure_content_metadata($category, $target_id, $pdo, $topicIdHint = 0)
     $stmt = $pdo->prepare("SELECT id FROM content_metadata WHERE " . ($category === 'post' ? 'post_id' : 'topic_id') . " = ?");
     $stmt->execute([$target_id]);
     if ($stmt->fetch()) {
+        $stmt->closeCursor();
         return ['api_hit' => false, 'reason' => 'Already exists'];
     }
+    $stmt->closeCursor();
 
     // 2. Fetch Metadata from Ninja API
-    // If it's a POST vote, we query by ID to get the specific post (and its author).
-    // If it's a TOPIC vote, we query by TOPIC_ID.
+    require_once __DIR__ . '/../v1/ninja_helper.php';
 
-    $url = "";
-    if ($category === 'post') {
-        // Correct endpoint for specific post: https://api.ninjastic.space/posts/XYZ
-        $url = "https://api.ninjastic.space/posts/" . intval($lookupPostId);
-    } else {
-        $url = "https://api.ninjastic.space/posts?topic_id=" . intval($lookupTopicId) . "&limit=1&order=created_at&sort=asc";
+    // STRATEGY (Approved by User): 
+    // 1. Fetch fast (Limit 1) to get Title/Board/Context immediately and unblock user.
+    // 2. Queue the Topic for full background scraping.
+
+    $fetchUrl = "";
+    $scrapeTopicId = ($category === 'topic') ? $target_id : $topicIdHint;
+
+    // Always fetch just ONE item first to be fast
+    if ($scrapeTopicId > 0) {
+        // Ninja API does not support sort/order params correctly or they changed. 
+        // Using limit=1 returns a result (likely latest or oldest depending on default).
+        // Suffices for getting board_id.
+        $fetchUrl = "https://api.ninjastic.space/posts?topic_id=" . intval($scrapeTopicId) . "&limit=1";
+    } elseif ($category === 'post') {
+        $fetchUrl = "https://api.ninjastic.space/posts/" . intval($target_id);
     }
 
-    $data = fetch_json_via_curl($url);
+    $data = fetch_json_via_curl($fetchUrl);
 
-    $board_id = 0;
-    $author_id = 0;
-    $topic_title = null;
-    $author_name = null;
-    $derivedTopicId = 0;
-
+    $postsFound = [];
     if (isset($data['result']) && $data['result'] === 'success') {
-        $post = null;
-        if ($category === 'post' && !empty($data['data'])) {
-            // For /posts/ID, data is the array of posts directly
-            $post = is_array($data['data']) && isset($data['data'][0]) ? $data['data'][0] : null;
-        } elseif ($category === 'topic' && !empty($data['data']['posts'])) {
-            // For /posts?topic_id=..., data['posts'] is the array
-            $post = $data['data']['posts'][0];
-        }
-
-        if ($post) {
-            $board_id = isset($post['board_id']) ? (int) $post['board_id'] : 0;
-            $author_id = isset($post['author_uid']) ? (int) $post['author_uid'] : 0;
-
-            // For 'post' lookups, the Ninja API response might contain the topic_id
-            if (isset($post['topic_id'])) {
-                $derivedTopicId = (int) $post['topic_id'];
-            }
-
-            // Capture Names
-            if (isset($post['subject'])) {
-                $rawTitle = strip_tags($post['subject']);
-                // Remove "Re: " prefix if present (case-insensitive)
-                $topic_title = preg_replace('/^Re:\s*/i', '', $rawTitle);
-            }
-            if (isset($post['author']))
-                $author_name = strip_tags($post['author']);
+        if (isset($data['data']['posts'])) {
+            $postsFound = $data['data']['posts'];
+        } elseif (isset($data['data']) && is_array($data['data'])) {
+            $postsFound = $data['data'];
         }
     }
 
-    // Fallback if API didn't give topic_id (which it should)
-    if ($derivedTopicId === 0 && $topicIdHint > 0) {
-        $derivedTopicId = $topicIdHint;
+    // BULK SAVE (Even if it's just 1)
+    bulk_save_metadata($pdo, $postsFound);
+
+    // QUEUE LOGIC:
+    // If we successfully found data, queue the topic for background scraping.
+    // If we fetched a post, we likely have the topic_id now.
+
+    $queueTopicId = $scrapeTopicId;
+    if ($queueTopicId == 0 && !empty($postsFound)) {
+        // Try to extract topic_id from the post we found
+        $first = reset($postsFound);
+        if (isset($first['topic_id']))
+            $queueTopicId = (int) $first['topic_id'];
     }
 
-    if ($board_id > 0) {
-        if ($category === 'topic') {
-            $stmt = $pdo->prepare("INSERT IGNORE INTO content_metadata (topic_id, board_id, author_id, topic_title, author_name) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$target_id, $board_id, $author_id, $topic_title, $author_name]);
-        } elseif ($category === 'post') {
-            // For post, we save post_id AND the linked topic_id
-            $stmt = $pdo->prepare("INSERT IGNORE INTO content_metadata (post_id, topic_id, board_id, author_id, topic_title, author_name) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$target_id, $derivedTopicId, $board_id, $author_id, $topic_title, $author_name]);
+    if ($queueTopicId > 0) {
+        // Upsert with last_post_id = 0? Or the one we found?
+        // If we set to 0, the runner will fetch page 1 (200 items) again. This is redundant but safe.
+        // If we set to the ID we found, the runner fetches everything AFTER it.
+        // Let's set to the ID we found to avoid re-fetching the first post.
+
+        $cursor = 0;
+        if (!empty($postsFound)) {
+            $lastItem = end($postsFound);
+            $cursor = isset($lastItem['id']) ? (int) $lastItem['id'] : 0;
         }
-        return ['api_hit' => true, 'category' => $category, 'derived_topic' => $derivedTopicId];
+
+        upsert_ninja_queue($pdo, $queueTopicId, $cursor);
     }
 
-    if ($board_id > 0) {
-        if ($category === 'topic') {
-            $stmt = $pdo->prepare("INSERT IGNORE INTO content_metadata (topic_id, board_id, author_id, topic_title, author_name) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$target_id, $board_id, $author_id, $topic_title, $author_name]);
-        } elseif ($category === 'post') {
-            // For post, we save post_id AND the linked topic_id
-            $stmt = $pdo->prepare("INSERT IGNORE INTO content_metadata (post_id, topic_id, board_id, author_id, topic_title, author_name) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$target_id, $lookupTopicId, $board_id, $author_id, $topic_title, $author_name]);
-        }
-        return ['api_hit' => true, 'category' => $category, 'linked_topic' => $lookupTopicId];
-    }
-
-    return ['api_hit' => true, 'reason' => 'API returned no valid data'];
+    return ['api_hit' => true, 'count' => count($postsFound)];
 }
 
 function fetch_json_via_curl($url)
@@ -121,7 +105,10 @@ function fetch_json_via_curl($url)
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'ShadowPulse/0.1');
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
     $res = curl_exec($ch);
     curl_close($ch);
     return json_decode($res, true);

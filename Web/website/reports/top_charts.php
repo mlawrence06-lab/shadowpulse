@@ -1,7 +1,7 @@
 <?php
 // top_charts.php
 $pageTitle = "Top Charts";
-$pageSubtitle = "Highest Rated Content & Members";
+$pageSubtitle = "Top Ranked Content & Members";
 $activePage = 'reports';
 include __DIR__ . '/../header.php';
 ?>
@@ -95,27 +95,27 @@ include __DIR__ . '/../header.php';
     <div class="content-body">
         <div class="dashboard-grid">
 
-            <!-- 1. Top Members -->
+            <!-- 1. Top Profiles -->
             <div class="chart-card">
-                <div class="card-title">Top Members (Avg Post Score)</div>
+                <div class="card-title">Top Ranked Profiles (Score)</div>
                 <div id="grid-members"></div>
             </div>
 
             <!-- 2. Top Boards -->
             <div class="chart-card">
-                <div class="card-title">Highest Rated Boards</div>
+                <div class="card-title">Top Ranked Boards</div>
                 <div id="grid-boards"></div>
             </div>
 
             <!-- 3. Top Topics -->
             <div class="chart-card">
-                <div class="card-title">Highest Rated Topics</div>
+                <div class="card-title">Top Ranked Topics</div>
                 <div id="grid-topics"></div>
             </div>
 
             <!-- 4. Top Posts -->
             <div class="chart-card">
-                <div class="card-title">Highest Rated Posts</div>
+                <div class="card-title">Top Ranked Posts</div>
                 <div id="grid-posts"></div>
             </div>
 
@@ -126,41 +126,44 @@ include __DIR__ . '/../header.php';
 <script>
     ej.base.registerLicense('Ngo9BigBOggjHTQxAR8/V1JFaF5cXGRCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWH1fc3RWRmlfWEF1WEtWYEg=');
 
-    // Defines column structures for different chart types
     const chartConfigs = {
         'members': {
             header: 'Member',
-            valHeader: 'Avg Score',
-            valField: 'avg',
+            valHeader: 'Score',
+            valField: 'score',
             format: 'N2',
             template: (props) => `<a href="https://bitcointalk.org/index.php?action=profile;u=${props.id}" target="_blank" class="chart-link">${props.label}</a>`
         },
         'boards': {
             header: 'Board',
-            valHeader: 'Avg Score',
-            valField: 'avg',
+            valHeader: 'Score',
+            valField: 'score',
             format: 'N2',
             template: (props) => `<a href="https://bitcointalk.org/index.php?board=${props.id}.0" target="_blank" class="chart-link">${props.label}</a>`
         },
         'topics': {
             header: 'Topic',
-            valHeader: 'Avg Score',
-            valField: 'avg',
+            valHeader: 'Score',
+            valField: 'score',
             format: 'N2',
             template: (props) => `<a href="https://bitcointalk.org/index.php?topic=${props.id}.0" target="_blank" class="chart-link">${props.label}</a>`
         },
         'posts': {
             header: 'Post',
-            valHeader: 'Avg Score',
-            valField: 'avg',
+            valHeader: 'Score',
+            valField: 'score',
             format: 'N2',
             template: (props) => {
-                // If topic_id is available (and > 0), use the canonical format: topic=T.msgP#msgP
-                // Otherwise fall back to msg=P
+                // Link format: index.php?topic=TOPIC_ID.msgPOST_ID#msgPOST_ID
+                // Label format: Post ID (Member Name)
+                let displayLabel = props.author_name
+                    ? `Post ${props.id} (${props.author_name})`
+                    : `Post ${props.id}`;
+
                 if (props.topic_id && props.topic_id > 0) {
-                    return `<a href="https://bitcointalk.org/index.php?topic=${props.topic_id}.msg${props.id}#msg${props.id}" target="_blank" class="chart-link">${props.label}</a>`;
+                    return `<a href="https://bitcointalk.org/index.php?topic=${props.topic_id}.msg${props.id}#msg${props.id}" target="_blank" class="chart-link">${displayLabel}</a>`;
                 }
-                return `<a href="https://bitcointalk.org/index.php?msg=${props.id}" target="_blank" class="chart-link">${props.label}</a>`;
+                return `<a href="https://bitcointalk.org/index.php?msg=${props.id}" target="_blank" class="chart-link">${displayLabel}</a>`;
             }
         }
     };
@@ -170,7 +173,6 @@ include __DIR__ . '/../header.php';
             .then(r => r.json())
             .then(res => {
                 if (res.ok) {
-                    // Add Rank column locally
                     let data = res.data.map((item, index) => {
                         item.Rank = index + 1;
                         return item;
@@ -187,8 +189,8 @@ include __DIR__ . '/../header.php';
                             {
                                 field: 'label',
                                 headerText: config.header,
-                                width: 200,
-                                template: config.template // Hyperlink template
+                                width: 250, // Increased for names
+                                template: config.template
                             },
                             {
                                 field: config.valField,
@@ -220,4 +222,5 @@ include __DIR__ . '/../header.php';
     });
 </script>
 
+<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Top Charts Report v1.5</div>
 <?php include __DIR__ . '/../footer.php'; ?>

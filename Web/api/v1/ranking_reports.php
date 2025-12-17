@@ -1,74 +1,84 @@
 <?php
 // ranking_reports.php
-// Unified Ranking Report Endpoint
+// Refactored: Extension Usage Stats (Rank, Member, Views, Total Votes, Searches)
+// v1.4: Reverted to source STRICTLY from 'members' table as requested.
+// Logic: If 'members' table is empty, report is empty.
 
 require_once 'cors.php';
 require_once __DIR__ . '/../../config/db.php';
 
 header('Content-Type: application/json');
+header("Cache-Control: no-cache, no-store, must-revalidate");
 
 try {
-    // Initialize PDO
     if (!function_exists('sp_get_pdo')) {
         throw new Exception("Database connection function missing.");
     }
     $pdo = sp_get_pdo();
 
-    // 1. Get Parameters
-    $sort = isset($_GET['sort']) ? $_GET['sort'] : 'page_views';
+    $sort = isset($_GET['sort']) ? $_GET['sort'] : 'rank';
     $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 100;
     if ($limit > 100)
         $limit = 100;
 
-    // Validate Sort Column
-    $validSorts = ['page_views', 'searches', 'topic_votes', 'post_votes'];
-    if (!in_array($sort, $validSorts)) {
-        $sort = 'page_views';
+    // Determine Sort Order
+    $orderBy = "total_votes DESC"; // Default
+    switch ($sort) {
+        case 'Member':
+            $orderBy = "custom_name ASC";
+            break;
+        case 'Page Views':
+            $orderBy = "page_views DESC";
+            break;
+        case 'Total Votes':
+            $orderBy = "total_votes DESC";
+            break;
+        case 'Searches':
+            $orderBy = "searches DESC";
+            break;
+        case 'Rank':
+        default:
+            $orderBy = "total_votes DESC";
+            break;
     }
 
-    // Map 'searches' param to DB column 'searches_made'
-    $orderBy = $sort;
-    if ($sort === 'searches') {
-        $orderBy = 'searches_made';
-    }
+    // QUERY:
+    // STRICT source from members table.
+    // Fixed: 'username' does not exist. Using 'custom_name'.
 
-    // 2. Query
-    // Restore m.custom_name logic
     $sql = "
         SELECT 
             m.member_id,
-            m.custom_name,
+            COALESCE(NULLIF(m.custom_name, ''), CONCAT('Member ', m.member_id)) as display_name,
             COALESCE(ms.page_views, 0) as page_views,
-            COALESCE(ms.searches_made, 0) as searches_made,
             COALESCE(ms.topic_votes, 0) as topic_votes,
-            COALESCE(ms.post_votes, 0) as post_votes
+            COALESCE(ms.post_votes, 0) as post_votes,
+            (COALESCE(ms.topic_votes, 0) + COALESCE(ms.post_votes, 0)) as total_votes,
+            0 as searches
         FROM members m
         LEFT JOIN member_stats ms ON m.member_id = ms.member_id
-        ORDER BY ms.$orderBy DESC
-        LIMIT ?
+        WHERE m.member_id > 0
+        ORDER BY $orderBy
+        LIMIT :limit
     ";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(1, $limit, PDO::PARAM_INT);
+    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
     $stmt->execute();
-
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Format
     $data = [];
     $rank = 1;
     foreach ($results as $row) {
-        // Use custom_name if available, otherwise member_id
-        $display = !empty($row['custom_name']) ? htmlspecialchars($row['custom_name']) : (int) $row['member_id'];
-
         $data[] = [
             'Rank' => $rank++,
             'MemberID' => (int) $row['member_id'],
-            'Username' => $display,
-            'PageViews' => (int) $row['page_views'],
-            'Searches' => (int) $row['searches_made'],
-            'TopicVotes' => (int) $row['topic_votes'],
-            'PostVotes' => (int) $row['post_votes']
+            'Username' => htmlspecialchars($row['display_name']),
+            'page_views' => (int) $row['page_views'],
+            'topic_votes' => (int) $row['topic_votes'],
+            'post_votes' => (int) $row['post_votes'],
+            'total_votes' => (int) $row['total_votes'],
+            'searches' => (int) $row['searches']
         ];
     }
 

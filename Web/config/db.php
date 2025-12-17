@@ -7,7 +7,7 @@ function sp_get_pdo()
     $host = 'bxzziugsp.mysql.db';
     $db = 'bxzziugsp';
     $user = 'bxzziugsp';
-    $pass = 'dnzDu6wSs6hiomR5VTLX';
+    $pass = 'rdB0UNNvlfio2SEpuzGEQ6J9WBs9Dq';
     $charset = 'utf8mb4';
 
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

@@ -9,7 +9,7 @@
 import { SP_CONFIG } from "./core/config.js";
 import { spLog, spError, createEl } from "./core/utils.js";
 import { getState, setState } from "./core/state.js";
-import { fetchBitcoinStats, fetchVoteSummary, submitVote, fetchEffectiveVote, bootstrapMember, trackPageView } from "./core/api.js";
+import { fetchBitcoinStats, fetchVoteSummary, fetchPageContext, submitVote, fetchEffectiveVote, bootstrapMember, trackPageView } from "./core/api.js";
 import { getOrCreateMemberUuid } from "./core/member.js";
 import { getVotingContext } from "./core/pageContext.js";
 
@@ -134,13 +134,16 @@ function buildToolbar(root, voteContext) {
   const createdVotes = createVotesZone( // FIX: Uses function name directly
     canVote
       ? async (desiredValue) => {
-        // 1. Submit the vote (sends to server, but the button is already highlighted by ui/votes.js)
-        await submitVote(desiredValue, voteContext);
+        // 1. Submit the vote (sends to server, button is optimistically highlighted)
+        const res = await submitVote(desiredValue, voteContext);
 
-        // 2. CRITICAL FIX: Force a full re-hydration from the server.
-        // This fetches the CORRECT global average (for the logo) 
-        // and the CORRECT total count (for the info zone text).
-        await hydrateVoteAndLogo(root, header, voteContext);
+        if (res && res.ok) {
+          // Update immediately via hydration to ensure consistency
+          await hydrateFullContext(root, header, voteContext);
+        } else {
+          // Fallback refresh on error (same behavior, simplify code path)
+          await hydrateFullContext(root, header, voteContext);
+        }
 
       }
       : null,
@@ -306,270 +309,198 @@ function getOrdinal(n) {
 
 // scripts/main.js - Replacing hydrateVoteAndLogo
 
-async function hydrateVoteAndLogo(root, header, voteContext) {
+// === UNIFIED HYDRATION ===
+// Replaces bootstrapMember + hydrateVote + hydrateStats
+
+async function hydrateFullContext(root, header, voteContext) {
   try {
     const refs = header._spRefs || {};
     const ctx = voteContext || refs.voteContext || null;
+    if (!ctx) return;
 
-    // 1. Settings Link Attention
-    const restoreAck = await getState("memberRestoreAck", false);
+    // 1. Fetch Unified Context (Member + Vote + Price)
+    // This triggers ONE API call (get_page_context.php) -> ONE SP call.
+    const cat = ctx.voteCategory || "topic";
+    const tid = ctx.targetId || 0;
+
+    const fullData = await fetchPageContext(cat, tid);
+
+    if (!fullData || !fullData.ok) {
+      // Handle offline/error?
+      return;
+    }
+
+    // 2. Process Member Identity (Bootstrap Logic)
+    if (fullData.member_info) {
+      const prevId = await getState("memberId", 0);
+      const prevAck = await getState("memberRestoreAck", false);
+
+      const newId = Number(fullData.member_info.member_id) || 0;
+      const newAck = !!fullData.member_info.restore_ack;
+
+      // Identity Change Detection
+      if (prevId > 0 && newId > 0 && newId !== prevId) {
+        spLog(`Identity Change Detected (${prevId} -> ${newId}). Reloading.`);
+        await new Promise(r => chrome.storage.local.clear(r));
+        // Save new
+        await setState("memberId", newId);
+        await setState("memberRestoreAck", newAck);
+        window.location.reload();
+        return;
+      }
+
+      // Standard Save
+      if (newId > 0) await setState("memberId", newId);
+      await setState("memberRestoreAck", newAck);
+    }
+
+    // 3. Process Vote & Logo (Hydrate Vote Logic)
+    // Extract Context
+    const summary = fullData.context ? fullData.context.summary : {};
+    const userVote = fullData.context ? fullData.context.user_vote : {};
+    const mStats = fullData.member_stats || {};
+
+    // Settings Link Attention
+    const ack = await getState("memberRestoreAck", false);
     const settingsLink = root.querySelector(".sp-ctrl-settings");
     if (settingsLink) {
-      if (!restoreAck) {
-        settingsLink.classList.add("sp-attention");
-      } else {
-        settingsLink.classList.remove("sp-attention");
-      }
+      settingsLink.classList.remove("sp-attention");
+      if (!ack) settingsLink.classList.add("sp-attention");
     }
 
-    if (!ctx || !ctx.canVote) {
+    // Buttons
+    if (refs.voteButtons) {
+      const eff = userVote.effective != null ? Number(userVote.effective) : null;
+      const des = userVote.desired != null ? Number(userVote.desired) : null;
+      setSelected(refs.voteButtons, eff, des);
+    }
+
+    // Summary Text
+    if (!root.classList.contains("sp-root-minimized") && refs.votesSummary) {
+      const uiSummary = {
+        vote_count: summary.vote_count || 0,
+        topic_score: summary.score || 0,
+        rank: Number(summary.rank) || 0,
+        currentVote: userVote.effective != null ? Number(userVote.effective) : null,
+        target_label: summary.label
+      };
+      renderVoteSummary(refs.votesSummary, uiSummary, ctx);
       if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
-      return;
     }
 
-    // --- DECOUPLE VALUES ---
-    let logoGlobalScore = 0;   // Logo uses Global Score
-    let myPersonalVote = null; // Buttons use Personal Vote (Effective)
-    let myDesiredVote = null;  // Buttons use Desired Vote (if different)
-    let initialRank = null;
+    // Logo
+    let logoScore = summary.score != null ? Number(summary.score) : 0;
+    let memberRank = mStats.rank != null ? Number(mStats.rank) : null;
+    updateLogoVisual(root, header, logoScore, memberRank);
 
-    const summary = await fetchVoteSummary(ctx);
+    // 4. Process Bitcoin Stats (Price Logic)
+    if (fullData.btc_stats && refs.statsPrice && refs.statsGraph) {
+      // DEBUG: Log BTC Data
 
-    if (summary) {
-      // a. Global Score/Count for Logo and Summary Text
-      if (summary.topic_score != null) {
-        logoGlobalScore = Number(summary.topic_score);
-      }
-
-      // b. Personal Vote for Button Highlight
-      if (summary.currentVote != null) {
-        myPersonalVote = Number(summary.currentVote);
-      }
-
-      // c. Desired Vote (from get_vote.php)
-      if (summary.desired_value != null) {
-        myDesiredVote = Number(summary.desired_value);
-      }
-
-      // d. Rank (Global Rank)
-      if (summary.rank != null) {
-        initialRank = Number(summary.rank);
-      }
-
-      // --- 3. APPLY PERSONAL VOTE TO BUTTONS (CRITICAL FIX) ---
-      // Uses the directly imported setSelected function
-      const buttons = refs.voteButtons;
-      if (buttons && buttons.length) {
-        setSelected(buttons, myPersonalVote, myDesiredVote);
-      }
-
-      // --- 4. RENDER GLOBAL COUNT/SUMMARY TEXT (CRITICAL FIX) ---
+      // Only render if not minimized (or if just un-minimized)
       if (!root.classList.contains("sp-root-minimized")) {
-        const summaryEl = refs.votesSummary;
-        if (summaryEl) {
-          // Uses the directly imported renderVoteSummary function
-          renderVoteSummary(summaryEl, summary, ctx);
-        }
-        if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
+        renderStats(refs.statsPrice, refs.statsGraph, fullData.btc_stats);
+        if (refs.statsZone) refs.statsZone.classList.remove("sp-zone-loading");
       }
+    } else {
+      // Always show zone (will be empty/default if not rendered)
+      if (refs.statsZone) refs.statsZone.classList.remove("sp-zone-loading");
+      if (refs.statsPrice) refs.statsPrice.textContent = "---";
     }
 
-    // Update Logo (Use Global Score/Rank)
-    updateLogoVisual(root, header, logoGlobalScore || 0, initialRank || null);
+    // 5. Ads (Separate Hydration due to external image loading, but fast)
+    // Kept separate as it doesn't need DB.
 
-  } catch (err) {
-    spError("hydrateVoteAndLogo error", err);
+  } catch (e) {
+    spError("hydrateFullContext", e);
   }
 }
 
-async function applyMinimizedState(root, minimized) {
-  if (minimized) {
-    if (root.dataset) {
-      if (root.dataset.prevLeft === undefined) {
-        root.dataset.prevLeft = root.style.left || "";
-      }
-      if (root.dataset.prevTransform === undefined) {
-        root.dataset.prevTransform = root.style.transform || "";
-      }
-    }
-    root.classList.add("sp-root-minimized");
-    root.style.left = "16px";
-    root.style.transform = "none";
-  } else {
-    root.classList.remove("sp-root-minimized");
-    if (root.dataset) {
-      if (root.dataset.prevLeft !== undefined) {
-        root.style.left = root.dataset.prevLeft;
-      }
-      if (root.dataset.prevTransform !== undefined) {
-        root.style.transform = root.dataset.prevTransform;
-      }
-    }
-    try {
-      if (root.style.transform === "none") {
-        const leftStr = root.style.left || "";
-        const match = leftStr.match(/-?\d+/);
-        if (match) {
-          const finalLeft = parseInt(match[0], 10);
-          setState("toolbarLeft", finalLeft);
-        }
-      }
-    } catch (e) {
-      // ignore storage errors
-    }
-  }
-}
-
+// Init Logic
 (async function init() {
   try {
-    // Only run on bitcointalk.org (or matching SITE_PATTERN)
-    if (!SP_CONFIG.SITE_PATTERN.test(location.hostname)) {
-      spLog("Not bitcointalk.org, aborting ShadowPulse.");
-      return;
-    }
-
-    // Avoid duplicate roots
-    if (document.getElementById(SP_CONFIG.ROOT_ID)) {
-      spLog("ShadowPulse root already exists; skipping.");
-      return;
-    }
+    if (!SP_CONFIG.SITE_PATTERN.test(location.hostname)) return;
+    if (document.getElementById(SP_CONFIG.ROOT_ID)) return;
 
     const theme = await getState("theme", SP_CONFIG.DEFAULT_THEME);
-    const root = buildRoot(theme); // IMMEDIATE: Draw extension
+    const root = buildRoot(theme);
     const voteContext = getVotingContext();
-    const header = buildToolbar(root, voteContext); // IMMEDIATE: Logo and Control/Settings zones visible
+    const header = buildToolbar(root, voteContext);
 
-    // IMMEDIATE: Ensure logo shows a sane default ("SP") immediately.
     updateLogoVisual(root, header, 0);
     const { panel: searchPanel, input: searchInput } = attachSearch(root, header);
 
-    // Kick off member bootstrap in the background
-    (async () => {
-      // CRITICAL FIX: Get previous ID before checking server
-      const previousId = await getState("memberId", 0);
+    // Member Bootstrap is now implicit in first hydrate
+    const memberUuid = await getOrCreateMemberUuid();
+    spLog("ShadowPulse build", SP_CONFIG.VERSION);
+    spLog("ShadowPulse member UUID", memberUuid);
+    // trackPageView(memberUuid); // Removed: Handled in SP now.
 
-      const memberUuid = await getOrCreateMemberUuid();
-      spLog("ShadowPulse build", SP_CONFIG.VERSION);
-      spLog("ShadowPulse member UUID", memberUuid);
-      try {
-        trackPageView(memberUuid);
-        const info = await bootstrapMember(memberUuid);
-
-        if (info && info.member_id != null) {
-          const numericId = Number(info.member_id) || 0;
-
-          // Identity Change Detection (e.g., switched from temp ID to restored ID)
-          if (numericId > 0 && previousId > 0 && numericId !== previousId) {
-            spLog(`Identity Change Detected (${previousId} -> ${numericId}). Wiping local storage.`);
-
-            // WIPE STORAGE and force reload to ensure a clean start
-            await new Promise(r => chrome.storage.local.clear(r));
-
-            await setState("memberUuid", info.member_uuid || memberUuid);
-            await setState("memberId", numericId);
-            await setState("memberRestoreAck", !!info.restore_ack);
-            window.location.reload();
-            return;
-          }
-
-          if (numericId > 0) {
-            await setState("memberId", numericId);
-            await setState("memberUuid", info.member_uuid || memberUuid);
-            await setState("memberRestoreAck", !!info.restore_ack);
-
-            // Re-run vote/logo/settings-highlight logic after bootstrap to use new ID/Ack
-            await hydrateVoteAndLogo(root, header, voteContext);
-          }
-        }
-      } catch (err) {
-        console.error("[ShadowPulse] bootstrapMember failed", err);
-      }
-    })();
-
+    // Saved Position
     const savedLeft = await getState("toolbarLeft", null);
     if (typeof savedLeft === "number") {
       root.style.left = savedLeft + "px";
       root.style.transform = "none";
     }
 
-    // Rewire logo click to toggle the search panel
-    let logoDownX = null;
-    let logoDownY = null;
-
+    // Events
     const logoCircle = header.querySelector(".sp-logo-circle");
     if (logoCircle) {
-      logoCircle.addEventListener("mousedown", (e) => {
-        logoDownX = e.clientX;
-        logoDownY = e.clientY;
-      });
-      logoCircle.addEventListener(
-        "click",
-        async (e) => {
-          const dx = logoDownX == null ? 0 : Math.abs(e.clientX - logoDownX);
-          const dy = logoDownY == null ? 0 : Math.abs(e.clientY - logoDownY);
+      // ... (Same event logic, abbreviated for replacement context alignment? 
+      // Wait, I need to preserve the event listener logic specifically).
+      // I will copy it.
+      let logoDownX = null, logoDownY = null;
+      logoCircle.addEventListener("mousedown", (e) => { logoDownX = e.clientX; logoDownY = e.clientY; });
+      logoCircle.addEventListener("click", async (e) => {
+        const dx = Math.abs(e.clientX - (logoDownX || 0));
+        const dy = Math.abs(e.clientY - (logoDownY || 0));
+        if (dx > 3 || dy > 3) return;
 
-          if (dx > 3 || dy > 3) return; // Treat as drag
-
-          const isMinimized = root.classList.contains("sp-root-minimized");
-          if (isMinimized) {
-            applyMinimizedState(root, false);
-            try {
-              const autoMin = (await getState("autoMin", false)) === true;
-              if (autoMin) await setState("autoMin", false);
-            } catch (e) { /* ignore */ }
-
-            // Re-trigger ASAP load after restore
-            hydrateAds(header);
-            hydrateVoteAndLogo(root, header, voteContext);
-            hydrateStats(header); // Trigger stats refresh immediately on restore
-            return;
-          }
-          toggleSearchPanel(searchPanel, searchInput);
-        },
-        { capture: true }
-      );
+        const isMinimized = root.classList.contains("sp-root-minimized");
+        if (isMinimized) {
+          applyMinimizedState(root, false);
+          try { await setState("autoMin", false); } catch (err) { }
+          hydrateAds(header);
+          hydrateFullContext(root, header, voteContext);
+          return;
+        }
+        toggleSearchPanel(searchPanel, searchInput);
+      }, { capture: true });
     }
 
+    // Auto Min
     const autoMin = (await getState("autoMin", false)) === true;
-    if (autoMin) {
-      applyMinimizedState(root, true);
-    }
+    if (autoMin) applyMinimizedState(root, true);
 
-    const isMinimizedNow = root.classList.contains("sp-root-minimized");
+    // ... imports
+    // ... imports removed
 
-    // === HYDRATION (ASAP phase) ===
+    // ... existing code ...
 
-    // 1. Load Ad & make visible
-    await hydrateAds(header);
-
-    // 2. Initial Vote/Logo/Settings Highlight/Votes Zone Visibility
-    await hydrateVoteAndLogo(root, header, voteContext);
-
-    // === PERIODIC REFRESH (EVERY xx MINS) ===
-    const refreshIntervalMins = SP_CONFIG.REFRESH_INTERVAL_MINUTES || 0.5; // Default to 30 seconds
-    const intervalMs = refreshIntervalMins * 60 * 1000;
-
-    // Run initial periodic update immediately if not minimized
-    if (!isMinimizedNow) {
-      await hydrateStats(header);
-    }
-
-    // Consolidate both vote and stats refresh into one timer
-    setInterval(async () => {
-      // 1. Refresh VOTE status, Logo, and Summary (from get_vote)
-      await hydrateVoteAndLogo(root, header, voteContext);
-
-      // 2. Refresh BITCOIN STATS (from last record / API)
-      if (!root.classList.contains("sp-root-minimized")) {
-        await hydrateStats(header);
-      }
-    }, intervalMs);
-
-    if (SP_CONFIG.DEV_MODE && !autoMin) {
-      applyMinimizedState(root, false);
-    }
+    // === INITIAL LOAD (Parallel) ===
+    hydrateAds(header);
+    hydrateStats(header); // Fallback
+    // injectPostVotes(); // REDACTED: User prefers Toolbar-only design.
+    await hydrateFullContext(root, header, voteContext); // Main Context
 
     spLog("ShadowPulse initialized.");
+
+    // === HASH/URL CHANGE LISTENER ===
+    // Detects when user clicks "#msg123" to switch context from Topic -> Post
+    window.addEventListener("hashchange", async () => {
+      const newCtx = getVotingContext();
+      await hydrateFullContext(root, header, newCtx);
+    });
+
+    // === PERIODIC REFRESH ===
+    const refreshIntervalMins = SP_CONFIG.REFRESH_INTERVAL_MINUTES || 0.5;
+    setInterval(async () => {
+      if (document.hidden) return;
+      // Re-evaluate context in case URL changed without hash event (rare but safe)
+      const currentCtx = getVotingContext();
+      await hydrateFullContext(root, header, currentCtx);
+    }, refreshIntervalMins * 60 * 1000);
+
   } catch (err) {
     spError("init error", err);
   }

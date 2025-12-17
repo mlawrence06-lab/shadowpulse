@@ -9,7 +9,7 @@
  * 4. Special -> Page Title (Center) + Subtitle
  */
 
-import { createEl } from "../core/utils.js";
+import { createEl, getOrdinal } from "../core/utils.js";
 
 /**
  * Creates the voting zone container and populates it based on the page context.
@@ -72,8 +72,9 @@ export function createVotesZone(onVoteSelected, voteContext) {
 
     // BOTTOM ROW: Rank Stub
     const bottomRow = createEl("div", ["sp-votes-row", "sp-votes-bottom", "sp-text-secondary"]);
-    bottomRow.textContent = "Ranked xth";
+    bottomRow.textContent = "Loading...";
     zone.appendChild(bottomRow);
+    summaryEl = bottomRow;
   }
 
   // --- MODE 4: SPECIAL (Home, Search, Donate, etc.) ---
@@ -131,20 +132,29 @@ function formatNumber(num) {
   return Number(num).toLocaleString();
 }
 
-// Helper: Get ordinal suffix (e.g. 5th, 1st, 2nd)
-function getOrdinal(n) {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 // Update summary text: "1,677 votes (Ranked 5th)"
 export function renderVoteSummary(summaryEl, payload, voteContext) {
   if (!summaryEl) return;
 
   const ctx = voteContext || {};
-  const noun = (ctx.kind === 'post') ? 'Post' : 'Topic';
+  let noun = 'topic';
+  if (ctx.kind === 'post') noun = 'post';
+  if (ctx.kind === 'board') noun = 'board';
+  if (ctx.kind === 'profile') noun = 'profile';
+
   const defaultText = `No ${noun} votes yet`;
+
+  // Update Header Text for Info Mode (Board/Profile) if label is available
+  if ((ctx.kind === 'board' || ctx.kind === 'profile') && payload && payload.target_label) {
+    // Find the TOP ROW in the parent zone
+    const zone = summaryEl.closest('.sp-zone');
+    if (zone) {
+      const topRow = zone.querySelector('.sp-votes-top');
+      if (topRow) {
+        topRow.textContent = payload.target_label;
+      }
+    }
+  }
 
   if (!payload || typeof payload !== "object") {
     summaryEl.textContent = defaultText;
@@ -155,15 +165,15 @@ export function renderVoteSummary(summaryEl, payload, voteContext) {
   const rank = Number(payload.rank) || 0;
 
   if (count > 0) {
-    // GRAMMAR FIX: "vote" vs "votes"
     const suffix = count === 1 ? "vote" : "votes";
+    let text = `${formatNumber(count)} ${suffix}`; // Removed noun
 
-    let text = `${formatNumber(count)} ${suffix}`;
     if (rank > 0) {
       text += ` (Ranked ${getOrdinal(rank)})`;
     }
     summaryEl.textContent = text;
   } else {
-    summaryEl.textContent = defaultText;
+    // Also simplified default text
+    summaryEl.textContent = "No votes yet";
   }
 }

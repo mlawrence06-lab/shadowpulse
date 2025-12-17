@@ -23,7 +23,17 @@ if (!isset($pageSubtitle)) {
 
     <div class="page-shell">
         <header class="site-header">
-            <div class="brand">
+            <?php
+            // Default active page detection
+            if (!isset($activePage)) {
+                if (strpos($_SERVER['SCRIPT_NAME'], '/reports/') !== false) {
+                    $activePage = 'reports';
+                } else {
+                    $activePage = 'dashboard'; // Default to dashboard for non-report pages
+                }
+            }
+            ?>
+            <a href="/shadowpulse/website/" class="brand" style="text-decoration: none;">
                 <div class="brand-logo" aria-hidden="true">
                     <img src="/shadowpulse/website/images/logo_web.svg" alt="ShadowPulse Logo" width="32" height="32"
                         style="display:block; border-radius: 50%;">
@@ -32,16 +42,18 @@ if (!isset($pageSubtitle)) {
                     <div class="brand-name">
                         ShadowPulse
                     </div>
-                    <div class="brand-tagline">Bitcointalk Alternative Recognition</div>
+                    <div class="brand-tagline">Tagline Needed!</div>
                 </div>
-            </div>
+            </a>
 
-            <?php
-            // Default active page if not set
-            if (!isset($activePage)) {
-                $activePage = '';
-            }
-            ?>
+            <?php if (strpos($_SERVER['SCRIPT_NAME'], '/reports/') !== false): ?>
+                <div class="header-banner" style="margin: 0 20px;">
+                    <!-- Revive Adserver Asynchronous JS Tag - Generated with Revive Adserver v6.0.4 -->
+                    <ins data-revive-zoneid="3" data-revive-id="d25be6bbfc14f64ec3435931485e35e2"></ins>
+                    <script async src="//vod.fan/adserver/www/delivery/asyncjs.php"></script>
+                </div>
+            <?php endif; ?>
+
             <nav class="site-nav" aria-label="Main navigation">
                 <a href="/shadowpulse/website/index.php"
                     class="nav-link <?php echo ($activePage === 'dashboard') ? 'nav-link-active' : ''; ?>">
@@ -59,5 +71,7 @@ if (!isset($pageSubtitle)) {
                 </a>
             </nav>
         </header>
+
+
 
         <main class="site-main">

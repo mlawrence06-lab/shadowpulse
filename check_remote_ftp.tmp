@@ -1,0 +1,89 @@
+<?php
+// get_page_context.php
+// Mega-Endpoint: Fetches Member Stats + Target Vote Summary in one go.
+
+require __DIR__ . '/cors.php';
+header('Content-Type: application/json');
+session_start();
+// die(json_encode(['debug' => 'init']));
+
+// 1. Inputs
+$memberUuid = isset($_GET['member_uuid']) ? trim($_GET['member_uuid']) : '';
+$category = isset($_GET['category']) ? trim($_GET['category']) : '';
+$targetId = isset($_GET['target_id']) ? (int) $_GET['target_id'] : 0;
+
+if ($targetId <= 0 || empty($category)) {
+    echo json_encode(['ok' => false, 'error' => 'Missing fields']);
+    exit;
+}
+
+require __DIR__ . '/../../config/db.php';
+
+try {
+    $pdo = sp_get_pdo();
+
+    // 2. Call Stored Procedure
+    $stmt = $pdo->prepare("CALL shadowpulse_get_page_context(?, ?, ?)");
+    $stmt->execute([$memberUuid, $category, $targetId]);
+
+    // 3. Extract Result Set 1: Member Stats
+    $memberStats = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$memberStats) {
+        $memberStats = ['total_points' => 0, 'calculated_rank' => 1];
+    }
+
+    // Move to next result set
+    $stmt->nextRowset();
+
+    // 4. Extract Result Set 2: Context (Vote Summary)
+    $context = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Flush any remaining (just in case)
+    do {
+        // drain
+    } while ($stmt->nextRowset());
+    $stmt = null; // Close
+
+    // 5. Structure Response
+    $response = [
+        'ok' => true,
+        'member_stats' => [
+            'rank' => (int) ($memberStats['calculated_rank'] ?? 1),
+            'points' => (int) ($memberStats['total_points'] ?? 0),
+            'topic_votes' => (int) ($memberStats['topic_votes'] ?? 0),
+            'post_votes' => (int) ($memberStats['post_votes'] ?? 0)
+        ],
+        'context' => [
+            'user_vote' => [
+                'effective' => isset($context['user_effective']) ? (int) $context['user_effective'] : null,
+                'desired' => isset($context['user_desired']) ? (int) $context['user_desired'] : null,
+            ],
+            'summary' => [
+                'vote_count' => (int) ($context['vote_count'] ?? 0),
+                'score' => (float) ($context['average_score'] ?? 0),
+                'rank' => (int) ($context['item_rank'] ?? 0),
+                'label' => $context['target_label'] // e.g. "My Topic Title"
+            ]
+        ]
+    ];
+
+    echo json_encode($response);
+
+    // 6. Background Queue (Piggyback)
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+
+    try {
+        require_once __DIR__ . '/../../core/queue_runner.php';
+        if (function_exists('run_ninja_queue')) {
+            run_ninja_queue($pdo);
+        }
+    } catch (Exception $e) {
+    }
+
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+}
+?>

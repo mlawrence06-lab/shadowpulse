@@ -12,42 +12,59 @@ import { getOrCreateMemberUuid } from "./member.js";
 import { getState } from "./state.js";
 
 
-// Simple retry helper for transient network/database outages.
-const SP_MAX_RETRIES = 3;
-const SP_RETRY_DELAY_MS = 3000;
+// Retries removed to prevent server hammering.
+// All fetches now use standard fetch() and fail fast.
 
-async function spRetryFetch(url, options, label) {
-  let attempt = 0;
-  while (attempt < SP_MAX_RETRIES) {
-    attempt += 1;
+export async function fetchPageContext(category, targetId) {
+  if (!SP_CONFIG.GET_PAGE_CONTEXT_API) return null;
+
+  try {
+    const memberUuid = await getOrCreateMemberUuid();
+
+    // Cache Key
+    const CACHE_KEY = `sp_ctx_v2_${category}_${targetId}`;
+    const CACHE_TTL = 30 * 1000; // 30s
+
+    // 1. Check Cache (DISABLED for accurate Page View tracking)
+    /*
     try {
-      const res = await fetch(url, options);
-      if (!res.ok) {
-        spLog(label + " failed with status " + res.status + " (attempt " + attempt + ")");
-      } else {
-        if (attempt > 1) {
-          spLog(label + " succeeded on retry attempt " + attempt);
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const entry = JSON.parse(cached);
+        if (Date.now() - entry.timestamp < CACHE_TTL) {
+          // console.log("[ShadowPulse] Restoring Context from cache");
+          return entry.data;
         }
-        return res;
       }
-    } catch (err) {
-      spLog(label + " error on attempt " + attempt, err && err.message ? err.message : err);
-    }
+    } catch (e) { }
+    */
 
-    if (attempt < SP_MAX_RETRIES) {
-      await new Promise((resolve) => setTimeout(resolve, SP_RETRY_DELAY_MS * attempt));
-    }
+    // 2. Fetch
+    const url = new URL(SP_CONFIG.GET_PAGE_CONTEXT_API);
+    url.searchParams.append("member_uuid", memberUuid);
+    url.searchParams.append("category", category);
+    url.searchParams.append("target_id", targetId);
+    url.searchParams.append("t", Date.now());
+
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+
+    // 3. Save Cache
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        data: json
+      }));
+    } catch (e) { }
+
+    return json;
+
+  } catch (err) {
+    spLog("fetchPageContext error", err);
+    return null;
   }
-
-  throw new Error(label + " failed after " + SP_MAX_RETRIES + " attempts");
-}
-
-export async function fetchAds() {
-  spLog("fetchAds() placeholder. ADS_API =", SP_CONFIG.ADS_API);
-  return {
-    line1: "Advertise your product here",
-    line2: "Contact us for promo slots"
-  };
 }
 
 export async function fetchBitcoinStats() {
@@ -60,34 +77,30 @@ export async function fetchBitcoinStats() {
   }
 
   try {
-    // Check local storage cache
     const CACHE_KEY = "sp_btc_stats";
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const entry = JSON.parse(cached);
         if (Date.now() - entry.timestamp < CACHE_TTL) {
-          // spLog("Restoring Bitcoin stats from cache");
           return entry.data;
         }
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) { }
 
-    // Add cache buster to prevent browser caching of the JSON
     const url = `${SP_CONFIG.GET_STATS_API}?t=${Date.now()}`;
-    const res = await spRetryFetch(url, {}, "fetchBitcoinStats");
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
 
-    // Save to cache
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         timestamp: Date.now(),
         data: json
       }));
-    } catch (e) { /* ignore */ }
+    } catch (e) { }
 
     return json;
   } catch (err) {
@@ -96,67 +109,28 @@ export async function fetchBitcoinStats() {
   }
 }
 
+// Deprecated: Use fetchPageContext where possible.
+// Kept for specific refresh actions if needed.
 export async function fetchVoteSummary(voteContext) {
-  if (!SP_CONFIG.GET_VOTE_API || SP_CONFIG.GET_VOTE_API === "***") {
-    // Original placeholder fallback
-    return {
-      topic_score: 0,
-      post_score: 0,
-      vote_count: 0,
-      rank: 0,
-      currentVote: null
-    };
-  }
+  // Redirect to Page Context logic if it matches the current page?
+  // For now, simple fetch without retry.
+  if (!SP_CONFIG.GET_VOTE_API) return null;
 
   try {
     const memberUuid = await getOrCreateMemberUuid();
-
-    // Construct cache key based on context
     const cat = voteContext.voteCategory || "topic";
-    const rawTid = voteContext.targetId ? Number(voteContext.targetId) : 0;
-    const tid = isNaN(rawTid) ? 0 : rawTid;
-    const CACHE_KEY = `sp_vote_${cat}_${tid}`;
-    // User Requested: Refresh at least once per 30 seconds.
-    // Set to 30s to match polling interval and prevent hammering.
-    const CACHE_TTL = 30 * 1000; // 30 seconds
+    const tid = voteContext.targetId || 0;
 
-    // Check cache
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const entry = JSON.parse(cached);
-        if (Date.now() - entry.timestamp < CACHE_TTL) {
-          // spLog("Restoring Vote Summary from cache", CACHE_KEY);
-          return entry.data;
-        }
-      }
-    } catch (e) { /* ignore */ }
-
-    // Construct the URL to get_vote.php
     const url = new URL(SP_CONFIG.GET_VOTE_API);
     url.searchParams.append("member_uuid", memberUuid);
-    url.searchParams.append("vote_category", voteContext.voteCategory || "topic");
-    url.searchParams.append("target_id", voteContext.targetId || 0);
-    url.searchParams.append("t", Date.now()); // Cache buster
+    url.searchParams.append("vote_category", cat);
+    url.searchParams.append("target_id", tid);
+    url.searchParams.append("t", Date.now());
 
-    const res = await spRetryFetch(url.toString(), {}, "fetchVoteSummary");
+    const res = await fetch(url.toString());
     if (!res.ok) return null;
-
-    const json = await res.json();
-
-    // Update Cache
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({
-        timestamp: Date.now(),
-        data: json
-      }));
-    } catch (e) { /* ignore */ }
-
-    return json;
-  } catch (err) {
-    spLog("fetchVoteSummary error", err);
-    return null;
-  }
+    return await res.json();
+  } catch (e) { return null; }
 }
 
 export async function submitVote(value, voteContext) {
@@ -190,7 +164,8 @@ export async function submitVote(value, voteContext) {
     };
 
     // 4. Send Request
-    const res = await spRetryFetch(
+    // 4. Send Request
+    const res = await fetch(
       SP_CONFIG.VOTE_API,
       {
         method: "POST",
@@ -198,8 +173,7 @@ export async function submitVote(value, voteContext) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
-      },
-      "submitVote()"
+      }
     );
 
     if (!res.ok) {
@@ -210,13 +184,20 @@ export async function submitVote(value, voteContext) {
     const json = await res.json();
 
     // 5a. CRITICAL: Invalidate Cache for this topic so immediate re-fetch gets fresh data
+    // 5a. CRITICAL: Invalidate Cache for this topic so immediate re-fetch gets fresh data
     try {
       const cat = voteContext && voteContext.voteCategory ? voteContext.voteCategory : "topic";
       const val = voteContext && voteContext.targetId ? Number(voteContext.targetId) : 0;
       const tid = isNaN(val) ? 0 : val;
+
+      // Remove specific context cache
+      const CTX_KEY = `sp_ctx_v2_${cat}_${tid}`;
+      localStorage.removeItem(CTX_KEY);
+
+      // Also remove legacy key if it exists
       const CACHE_KEY = `sp_vote_${cat}_${tid}`;
       localStorage.removeItem(CACHE_KEY);
-      // spLog("[ShadowPulse] Invalidated cache for", CACHE_KEY);
+
     } catch (e) { /* ignore */ }
 
     // 5. Parse Response (Structure: { ok: true, effective_value: X })
@@ -243,7 +224,8 @@ export async function submitVote(value, voteContext) {
     return {
       ok: json.ok === true,
       effectiveValue: effectiveValue,
-      vote_count: 1, // Placeholder until get_vote refreshes the total
+      vote_count: (typeof json.vote_count === 'number') ? json.vote_count : 1,
+      total_score: (typeof json.total_score === 'number') ? json.total_score : 0,
       rank: 0,       // Placeholder
       raw: json
     };
@@ -268,7 +250,7 @@ export async function bootstrapMember(memberUuid) {
     };
   }
 
-  const res = await spRetryFetch(
+  const res = await fetch(
     SP_CONFIG.MEMBER_BOOTSTRAP_API,
     {
       method: "POST",
@@ -276,8 +258,7 @@ export async function bootstrapMember(memberUuid) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ member_uuid: memberUuid })
-    },
-    "bootstrapMember"
+    }
   );
 
   if (!res.ok) {
@@ -418,7 +399,7 @@ export async function trackPageView(memberUuid) {
 
   try {
     const memberId = await getState("memberId", 0);
-    const res = await spRetryFetch(
+    const res = await fetch(
       SP_CONFIG.MEMBER_STATS_UPDATE_API,
       {
         method: "POST",
@@ -430,8 +411,7 @@ export async function trackPageView(memberUuid) {
           member_id: memberId,
           page_views: 1
         })
-      },
-      "trackPageView"
+      }
     );
 
     if (!res.ok) {

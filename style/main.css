@@ -150,7 +150,7 @@
 }
 
 /* separators: Removed left border/padding for clean look */
-.sp-zone+.sp-zone:not(.sp-zone-ads):not(.sp-zone-stats) {
+.sp-zone+.sp-zone:not(.sp-zone-ads):not(.sp-zone-stats):not(.sp-zone-votes) {
   border-left: none;
   height: 32px;
   margin-left: 2px;
@@ -201,11 +201,14 @@
 .sp-logo-text {
   position: relative;
   z-index: 2;
-  font-weight: 800; /* Bolder */
-  font-size: 18px; /* Larger */
+  font-weight: 800;
+  /* Bolder */
+  font-size: 18px;
+  /* Larger */
   letter-spacing: 0.03em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); /* Added Shadow */
-  
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  /* Added Shadow */
+
   /* Animation Hook - SLOWED for Debugging (Tripled) */
   transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
   opacity: 1;
@@ -214,7 +217,8 @@
 
 .sp-logo-text.sp-fade-out {
   opacity: 0;
-  transform: scale(0.85); /* Subtle shrink effect */
+  transform: scale(0.85);
+  /* Subtle shrink effect */
 }
 
 /* dragging hint */
@@ -315,6 +319,9 @@ body.sp-dragging {
   border-radius: 100px;
   height: 42px;
   align-self: center;
+  /* Centering Fix */
+  align-items: center;
+  text-align: center;
 }
 
 .sp-votes-row {
@@ -323,6 +330,14 @@ body.sp-dragging {
   justify-content: center;
   width: 100%;
   line-height: 1;
+}
+
+.sp-votes-top,
+.sp-votes-summary,
+.sp-text-secondary {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
 }
 
 .sp-votes-top {

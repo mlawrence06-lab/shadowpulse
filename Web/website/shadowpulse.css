@@ -86,6 +86,18 @@ body {
   gap: 10px;
 }
 
+@keyframes pulse-blue {
+  0% {
+    box-shadow: 0 0 0 0 rgba(30, 144, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(30, 144, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(30, 144, 255, 0);
+  }
+}
+
 .brand-logo {
   width: 40px;
   height: 40px;
@@ -93,6 +105,12 @@ body {
   align-items: center;
   justify-content: center;
   /* Removed border-radius/background/shadow to let the image fill the box */
+  overflow: visible;
+}
+
+.brand-logo img {
+  border-radius: 50%;
+  animation: pulse-blue 2s infinite;
 }
 
 .brand-logo svg {

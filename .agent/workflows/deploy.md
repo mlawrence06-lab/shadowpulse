@@ -1,48 +1,42 @@
 ---
-description: Deploy website files to the server using Curl (FTP)
+description: Deploy website files to the server using SCP
 ---
 # Deployment Workflow
 
-This workflow uploads local files to the remote server using `curl.exe` with FTP. This is the **proven method** for this environment.
+This workflow uploads local files to the remote server using `scp` (Secure Copy).
 
 **Credentials:**
+- **Host:** `ssh.cluster051.hosting.ovh.net`
 - **User:** `bxzziug`
-- **Pass:** `W3YfFZhknNwR9jeD6VDN`
-- **Host:** `ftp.cluster051.hosting.ovh.net`
-- **Remote Base:** `/vod.fan/shadowpulse/`
+- **Pass:** `s57MMJM0GHUabZLij7Z6V5iwwVe5a2`
+- **Remote Base:** `~/vod.fan/shadowpulse/`
 
 ## 1. Deploy Single File
-Use this pattern to upload a single file. Replace `[LOCAL_REL_PATH]` and `[REMOTE_REL_PATH]` accordingly.
+Replace `[LOCAL_PATH]` with the relative path to your file, and `[REMOTE_PATH]` with the full remote path.
 
 ```powershell
-curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" --ftp-create-dirs -T [LOCAL_PATH] ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/[REMOTE_PATH]
+scp [LOCAL_PATH] bxzziug@ssh.cluster051.hosting.ovh.net:~/vod.fan/shadowpulse/[REMOTE_PATH]
 ```
 
 ### Examples
 
 **Deploy Reports Index:**
 ```powershell
-curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/website/reports/index.php ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/website/reports/index.php
+scp Web/website/reports/index.php bxzziug@ssh.cluster051.hosting.ovh.net:~/vod.fan/shadowpulse/website/reports/index.php
 ```
 
 **Deploy API Endpoint:**
 ```powershell
-curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/api/v1/vote_pyramid.php ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/api/v1/vote_pyramid.php
+scp Web/api/v1/vote_pyramid.php bxzziug@ssh.cluster051.hosting.ovh.net:~/vod.fan/shadowpulse/api/v1/vote_pyramid.php
 ```
 
-## 2. Deploy Multiple Files (Manual Batches)
-For multiple files, execute sequential curl commands.
+## 2. Deploy Multiple Files / Directory
+To deploy a directory recursively:
 
 ```powershell
-curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/website/reports/pyramid.php ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/website/reports/pyramid.php
-curl.exe -u "bxzziug:W3YfFZhknNwR9jeD6VDN" -T Web/website/shadowpulse.css ftp://ftp.cluster051.hosting.ovh.net/vod.fan/shadowpulse/website/shadowpulse.css
+scp -r Web/api/v1 bxzziug@ssh.cluster051.hosting.ovh.net:~/vod.fan/shadowpulse/api/
 ```
 
-> **Note:** Always use `curl.exe` (explicit executable) to avoid PowerShell alias conflicts.
-
-## 3. Extension Versioning Strategy
-**Rule:** Whenever the **Extension Code** (manifest, JS, CSS) is modified, you **MUST** increment the **patch version** in `manifest.json`.
-
-- Example: `0.30.0` → `0.30.1`
-- Exception: Only skip if the user explicitly says "do not bump version".
-- Sync: Ensure the `settings.js` or UI references to version match if they are hardcoded (though they should rely on `runtime.getManifest()`).
+## 3. Extension Versioning
+**Current Version:** 0.31.16
+Ensure `manifest.json` matches the declared version in `scripts/core/config.js` (loaded at runtime).

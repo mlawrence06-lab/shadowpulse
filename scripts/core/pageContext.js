@@ -327,7 +327,7 @@ export function parseBitcointalkPage(urlString) {
       const userId = parseLeadingInt(uRaw);
 
       if (!userId) {
-        // Own profile
+        // Own profile ("Profile (Self)")
         ctx.kind = "special";
         ctx.pageTitle = "Profile (Self)";
         ctx.pageSubtitle = "";
@@ -336,29 +336,10 @@ export function parseBitcointalkPage(urlString) {
         ctx.userId = userId;
         ctx.voteCategory = "profile";
         ctx.targetId = userId;
+        ctx.canVote = true; // Profiles ARE votable contexts
 
-        // Handle specific profile sub-actions
-        if (sa === "summary" || !sa) {
-          // Standard profile view
-          ctx.pageTitle = "Profile"; // Stub will be replaced by API later
-          ctx.pageSubtitle = "";     // Rank Stub
-        } else if (sa === "showposts") {
-          ctx.kind = "special";
-          ctx.pageTitle = "Show Posts";
-          ctx.pageSubtitle = "";
-        } else if (sa === "statpanel") {
-          ctx.kind = "special";
-          ctx.pageTitle = "User Stats (Disabled)";
-          ctx.pageSubtitle = "";
-        } else if (sa === "account") {
-          ctx.kind = "special";
-          ctx.pageTitle = "Account Settings";
-          ctx.pageSubtitle = "";
-        } else {
-          // Fallback for other profile actions
-          ctx.pageTitle = "Profile";
-          ctx.pageSubtitle = "";
-        }
+        // Default Title - Will be overwritten by API data if available
+        ctx.pageTitle = "Profile " + userId;
       }
       return ctx;
     }

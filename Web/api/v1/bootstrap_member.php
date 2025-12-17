@@ -49,7 +49,7 @@ try {
 
     // Fetch the row
     $stmt = $pdo->prepare(
-        'SELECT member_id, member_uuid, restore_ack, created_at, last_seen_at
+        'SELECT member_id, member_uuid, custom_name, restore_ack, created_at, last_seen_at
          FROM members
          WHERE member_uuid = :uuid
          LIMIT 1'
@@ -66,6 +66,7 @@ try {
     echo json_encode([
         'member_id' => (int) $row['member_id'],
         'member_uuid' => $row['member_uuid'],
+        'custom_name' => $row['custom_name'],
         'restore_ack' => (bool) $row['restore_ack'],
         'created_at' => $row['created_at'],
         'last_seen_at' => $row['last_seen_at'],

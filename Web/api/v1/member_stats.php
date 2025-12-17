@@ -22,26 +22,27 @@ try {
     if ($inputMemberId > 0) {
         $memberId = $inputMemberId;
     } else {
-        // 1. Resolve UUID to ID (Fallback)
+        // 1. Resolve UUID to ID (Auto-Register if missing)
         $stmt = $pdo->prepare("SELECT member_id FROM members WHERE member_uuid = ?");
         $stmt->execute([$memberUuid]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$row) {
-            // Return zeros if member not found
-            echo json_encode([
-                'ok' => true,
-                'stats' => [
-                    'searches_made' => 0,
-                    'page_views' => 0,
-                    'topic_votes' => 0,
-                    'post_votes' => 0
-                ]
-            ]);
-            exit;
+            // Auto-register
+            $stmt = $pdo->prepare("INSERT INTO members (member_uuid) VALUES (?)");
+            $stmt->execute([$memberUuid]);
+            $memberId = $pdo->lastInsertId();
+
+            // Initialize stats
+            $stmt = $pdo->prepare("INSERT IGNORE INTO member_stats (member_id, page_views) VALUES (?, 0)");
+            $stmt->execute([$memberId]);
+        } else {
+            $memberId = (int) $row['member_id'];
         }
-        $memberId = (int) $row['member_id'];
     }
+
+    // Return the ID so the client can save it
+    $stats['member_id'] = $memberId; // Explicitly return ID for client sync
 
     // 2. Initialize Stats
     $stats = [

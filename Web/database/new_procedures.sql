@@ -2,7 +2,7 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS `shadowpulse_get_vote_summary`$$
 
-CREATE DEFINER=`bxzziugsp`@`%` PROCEDURE `shadowpulse_get_vote_summary`(
+CREATE PROCEDURE `shadowpulse_get_vote_summary`(
     IN `p_member_uuid` CHAR(36),
     IN `p_vote_category` VARCHAR(16),
     IN `p_target_id` BIGINT UNSIGNED

@@ -11,7 +11,7 @@ export const SP_CONFIG = {
   DEFAULT_SEARCH_ENGINE_NAME: "Bitlist Search",
   DEFAULT_SEARCH_ENGINE_URL: "https://vod.fan/shadowpulse/website/search.php",
   DEV_MODE: true,
-  REFRESH_INTERVAL_MINUTES: 5, // Default to 5 minutes
+  REFRESH_INTERVAL_MINUTES: 0.5, // Default to 30 seconds (0.5 mins)
   SITE_PATTERN: /(^|\.)bitcointalk\.org$/i,
 
   // APIs
@@ -21,6 +21,7 @@ export const SP_CONFIG = {
 
   GET_STATS_API: "https://vod.fan/shadowpulse/api/v1/get_stats.php",
   GET_VOTE_API: "https://vod.fan/shadowpulse/api/v1/get_vote.php",
+  GET_PAGE_CONTEXT_API: "https://vod.fan/shadowpulse/api/v1/get_page_context.php",
   VOTE_API: "https://vod.fan/shadowpulse/api/v1/vote.php",
   MEMBER_BOOTSTRAP_API: "https://vod.fan/shadowpulse/api/v1/bootstrap_member.php",
   MEMBER_RESTORE_API: "https://vod.fan/shadowpulse/api/v1/restore_member.php",

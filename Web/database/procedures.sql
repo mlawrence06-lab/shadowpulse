@@ -1,9 +1,11 @@
 -- shadowpulse_cast_vote stored procedure
 -- Saved from phpMyAdmin dump provided by user
 
-DELIMITER $$
 
-CREATE DEFINER=`bxzziugsp`@`%` PROCEDURE `shadowpulse_cast_vote`(
+
+
+DROP PROCEDURE IF EXISTS `shadowpulse_cast_vote`;
+CREATE PROCEDURE `shadowpulse_cast_vote`(
     IN `p_member_id` BIGINT UNSIGNED, 
     IN `p_vote_category` VARCHAR(16), 
     IN `p_target_id` BIGINT UNSIGNED, 
@@ -93,6 +95,6 @@ BEGIN
       VALUES (p_member_id, v_cat, p_target_id, p_desired_value, p_effective_value);
 
   COMMIT;
-END$$
+END;
 
-DELIMITER ;
+
