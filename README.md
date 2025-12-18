@@ -1,4 +1,5 @@
 BETA Install Instructions
+0.34 - all member info removed
 
 In order:
 1) Remove any older extensions and close all bitcointalk tabs in all browsers
