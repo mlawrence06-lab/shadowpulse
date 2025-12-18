@@ -41,9 +41,8 @@ try {
             ]
         ]);
     } else {
-        // UUID not found
-        http_response_code(404);
-        echo json_encode(['error' => 'Invalid code']);
+        // UUID not found - Return 200 so client can handle JSON error gracefully without console noise
+        echo json_encode(['ok' => false, 'error' => 'Invalid code']);
     }
 
 } catch (Throwable $e) {

@@ -40,10 +40,13 @@ export function createSearchPanel(rootEl) {
       return;
     }
 
-    let baseUrl = SP_CONFIG.DEFAULT_SEARCH_ENGINE_URL;
-    if (!baseUrl || baseUrl === "***") {
-      baseUrl = "https://vod.fan/shadowpulse/website/search.php";
+    let engine = await getState("searchEngine", "bitlist");
+    let baseUrl = "https://vod.fan/shadowpulse/website/search-bitlist.php";
+
+    if (engine === "bitlist") {
+      baseUrl = "https://vod.fan/shadowpulse/website/search-bitlist.php";
     }
+    // Add other engines here in future
 
     let url;
     if (baseUrl.indexOf("?") === -1) {
@@ -92,11 +95,19 @@ export function createSearchPanel(rootEl) {
  * Toggle the search panel open/closed with a small delay before focusing input,
  * so it lines up with the CSS opening animation.
  */
-export function toggleSearchPanel(panel, input) {
+export async function toggleSearchPanel(panel, input) {
   const isOpen = panel.dataset.open === "true";
   if (isOpen) {
     panel.dataset.open = "false";
   } else {
+    // Dynamic Placeholder
+    const engine = await getState("searchEngine", "bitlist");
+    if (engine === "bitlist") {
+      input.placeholder = "Search via Bitlist Search";
+    } else {
+      input.placeholder = "Search via " + engine.charAt(0).toUpperCase() + engine.slice(1);
+    }
+
     panel.dataset.open = "true";
     setTimeout(() => {
       input.focus();

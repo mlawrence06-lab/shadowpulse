@@ -89,7 +89,15 @@
   max-width: 960px;
 }
 
-/* minimized: shrink toolbar to logo only */
+/* minimized: shrink toolbar to logo only and move to lower left */
+.sp-root.sp-root-minimized {
+  left: 20px !important;
+  bottom: 20px !important;
+  transform: none !important;
+  right: auto !important;
+  top: auto !important;
+}
+
 .sp-root.sp-root-minimized .sp-toolbar {
   justify-content: flex-start;
 }

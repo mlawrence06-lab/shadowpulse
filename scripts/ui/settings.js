@@ -50,6 +50,7 @@ export async function openSettingsModal(root) {
   } catch (_) { }
 
   backdrop.classList.add("sp-settings-open");
+  resetRestoreUI(backdrop); // Reset on Open
 
   // Fetch & Populate Statistics
   (async () => {
@@ -348,10 +349,31 @@ function buildSettingsModal(root) {
   memberRow.appendChild(memberValue);
   statsBlock.appendChild(memberRow);
 
-  function makeStatRow(labelText, dataRole) {
+  function makeStatRow(labelText, dataRole, linkUrl) {
     const row = createEl("div", ["sp-settings-row"]);
     const label = createEl("span", ["sp-settings-row-label"]);
-    label.textContent = labelText;
+
+    if (linkUrl) {
+      const a = createEl("a");
+      a.href = linkUrl;
+      a.textContent = labelText;
+      a.target = "_blank";
+      a.style.textDecoration = "none";
+      a.style.color = "inherit";
+      a.style.cursor = "pointer";
+      a.onmouseenter = () => a.style.textDecoration = "underline";
+      a.onmouseleave = () => a.style.textDecoration = "none";
+
+      // Append UUID if available
+      getState("memberUuid", null).then(uuid => {
+        if (uuid) a.href = linkUrl + "?uuid=" + uuid;
+      });
+
+      label.appendChild(a);
+    } else {
+      label.textContent = labelText;
+    }
+
     const value = createEl("span", ["sp-settings-row-value", "sp-settings-stat-value"]);
     if (dataRole) {
       value.dataset.role = dataRole;
@@ -362,29 +384,27 @@ function buildSettingsModal(root) {
     return row;
   }
 
+  const diagUrl = "https://vod.fan/shadowpulse/website/reports/pyramid.php";
+
   statsBlock.appendChild(makeStatRow("Page Views:", "sp-stat-page-views"));
-  statsBlock.appendChild(makeStatRow("Active Topic Votes:", "sp-stat-topic-votes"));
-  statsBlock.appendChild(makeStatRow("Active Post Votes:", "sp-stat-post-votes"));
+  // 2) Remove "Active " and apply diagUrl
+  statsBlock.appendChild(makeStatRow("Topic Votes:", "sp-stat-topic-votes", diagUrl));
+  statsBlock.appendChild(makeStatRow("Post Votes:", "sp-stat-post-votes", diagUrl));
   statsBlock.appendChild(makeStatRow("Searches Made:", "sp-stat-searches"));
 
   const globalRow = createEl("div", ["sp-settings-row"]);
   globalRow.style.marginTop = "15px";
 
   const globalLink = createEl("a", ["sp-settings-link"]);
-  globalLink.textContent = "Vote Diagnostics";
+  globalLink.textContent = "Reports Center"; // 4) Rename
   globalLink.target = "_blank";
   globalLink.rel = "noopener noreferrer";
 
-  // Default to base URL
-  const reportBaseUrl = "https://vod.fan/shadowpulse/website/reports/pyramid.php";
+  // 4) New URL
+  const reportBaseUrl = "https://vod.fan/shadowpulse/website/reports/index.php";
   globalLink.href = reportBaseUrl;
 
-  // Asynchronously append UUID if available
-  getState("memberUuid", null).then(uuid => {
-    if (uuid) {
-      globalLink.href = reportBaseUrl + "?uuid=" + uuid;
-    }
-  });
+
 
   globalRow.appendChild(globalLink);
   statsBlock.appendChild(globalRow);
@@ -421,6 +441,7 @@ function buildSettingsModal(root) {
       secBlock.style.display = "none";
       toggleBtn.textContent = "SHOW";
     }
+    resetRestoreUI(backdrop); // Reset on Toggle
   });
 
   const codeCol = createEl("div", ["sp-settings-col"]);
@@ -482,6 +503,7 @@ function buildSettingsModal(root) {
 
   const warningText = createEl("div", ["sp-settings-warning"]);
   warningText.textContent = "⚠️ This will overwrite all your Settings and Statistics!";
+  warningText.dataset.role = "sp-warning-text"; // Added role for access
   warningText.style.display = "none";
   restoreCol.appendChild(warningText);
 
@@ -572,20 +594,43 @@ function applyMemberIdentity(backdrop, memberId, memberUuid, restoreAck) {
     };
   }
 
+  const warningEl = backdrop.querySelector('[data-role="sp-warning-text"]'); // Verify selection
+
   if (restoreBtn && inputEl) {
+    if (warningEl && inputEl) {
+      // Reset on input
+      inputEl.addEventListener("input", () => {
+        if (warningEl.textContent !== "⚠️ This will overwrite all your Settings and Statistics!") {
+          warningEl.textContent = "⚠️ This will overwrite all your Settings and Statistics!";
+          warningEl.style.color = "#ef4444"; // Reset color to red/default
+        }
+      });
+    }
+
     restoreBtn.onclick = async (e) => {
       e.preventDefault();
       const code = (inputEl.value || "").trim();
       if (!code) return;
+
+      // Reset State
+      inputEl.style.borderColor = "";
+      inputEl.title = "";
+      if (warningEl) {
+        warningEl.textContent = "⚠️ This will overwrite all your Settings and Statistics!";
+      }
+
       try {
         const info = await restoreMember(code);
-        if (info && info.member_uuid) {
+        if (info && (info.member_uuid || info.ok)) { // Handle 200 OK w/ error body
+          if (info.ok === false) {
+            throw new Error(info.error || "Invalid Code");
+          }
+
           await new Promise((resolve) => {
             chrome.storage.local.clear(() => resolve());
           });
 
           await setMemberUuid(info.member_uuid);
-          await setState("memberUuid", info.member_uuid);
           await setState("memberUuid", info.member_uuid);
           await setState("memberId", info.member_id || 0);
 
@@ -605,11 +650,32 @@ function applyMemberIdentity(backdrop, memberId, memberUuid, restoreAck) {
           await setState("memberRestoreAck", true);
           try { await updateRestoreAck(info.member_uuid, true); } catch (_) { }
 
+          // Success Visual
+          inputEl.style.borderColor = "#28a745";
           window.location.reload();
+        } else {
+          throw new Error("Invalid Code");
         }
 
       } catch (err) {
-        console.error("[ShadowPulse] restoreMember failed", err);
+        // Only log actual system errors, not expected user input errors
+        if (err.message !== "Invalid Code") {
+          console.error("[ShadowPulse] restoreMember failed", err);
+        }
+
+        // Error Visual
+        inputEl.style.borderColor = "red";
+        // inputEl.title = "Invalid Code or Network Error"; // Removed tooltip
+
+        if (warningEl) {
+          warningEl.textContent = "❌ Invalid Code";
+          warningEl.style.display = "block";
+        }
+
+        // 1) Focus and put cursor at end
+        inputEl.focus();
+        const len = inputEl.value.length;
+        inputEl.setSelectionRange(len, len);
       }
     };
   }
@@ -709,4 +775,18 @@ async function applyTheme(root, theme) {
     root.classList.add("sp-theme-" + theme);
     await setState("theme", theme);
   } catch (_) { }
+}
+
+function resetRestoreUI(backdrop) {
+  const input = backdrop.querySelector('[data-role="sp-restore-input"]');
+  const warning = backdrop.querySelector('[data-role="sp-warning-text"]');
+  if (input) {
+    input.value = "";
+    input.style.borderColor = "";
+  }
+  if (warning) {
+    warning.textContent = "⚠️ This will overwrite all your Settings and Statistics!";
+    warning.style.color = "";
+    warning.style.display = "none";
+  }
 }

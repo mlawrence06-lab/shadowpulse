@@ -4,6 +4,7 @@ Thumbs.db
 *.key
 *.pub
 config/db.php
+Web/config/db.php
 
 # Deployment & Temp
 *.sftp
@@ -15,3 +16,4 @@ test_*
 counts_dump.txt
 meta_dump.txt
 schema_update_out.txt
+

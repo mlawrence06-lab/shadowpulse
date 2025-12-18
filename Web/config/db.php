@@ -2,12 +2,16 @@
 // db.php
 // Database connection configuration.
 
+define('DB_USER', 'bxzziugsp');
+define('DB_PASS', 'QvWOugAl2ZcqNzCK1Wzs610yS6h8Xm');
+define('DB_NAME', 'bxzziugsp');
+
 function sp_get_pdo()
 {
     $host = 'bxzziugsp.mysql.db';
-    $db = 'bxzziugsp';
-    $user = 'bxzziugsp';
-    $pass = 'rdB0UNNvlfio2SEpuzGEQ6J9WBs9Dq';
+    $db = DB_NAME;
+    $user = DB_USER;
+    $pass = DB_PASS;
     $charset = 'utf8mb4';
 
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

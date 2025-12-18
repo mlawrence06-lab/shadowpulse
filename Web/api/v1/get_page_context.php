@@ -30,10 +30,11 @@ $memberUuid = isset($_GET['member_uuid']) ? trim($_GET['member_uuid']) : '';
 $category = isset($_GET['category']) ? trim($_GET['category']) : '';
 $targetId = isset($_GET['target_id']) ? (int) $_GET['target_id'] : 0;
 
-if ($targetId <= 0 || empty($category)) {
-    echo json_encode(['ok' => false, 'error' => 'Missing fields']);
+if (empty($category)) {
+    echo json_encode(['ok' => false, 'error' => 'Missing category']);
     exit;
 }
+// Note: targetId <= 0 is allowed. SP yields member stats + BTC ticker + empty vote context.
 
 $dbFile = __DIR__ . '/../../config/db.php';
 if (!file_exists($dbFile)) {

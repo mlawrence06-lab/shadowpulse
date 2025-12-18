@@ -1,5 +1,6 @@
-ALPHA Install Instructions
+BETA Install Instructions
 
-1) Remove any older extensions first
-2) Close any bitcointalk windows
-3) Load unpacked from the zip file you downloaded and extracted
+In order:
+1) Remove any older extensions and close all bitcointalk tabs in all browsers
+2) Download and extract the ZIP into a new location
+3) Load unpacked from the new location

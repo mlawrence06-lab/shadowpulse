@@ -34,6 +34,12 @@ function getOrdinalSuffix(n) {
   return "th";
 }
 
+// Helper: Apply minimized state class
+function applyMinimizedState(root, isMinimized) {
+  if (isMinimized) root.classList.add("sp-root-minimized");
+  else root.classList.remove("sp-root-minimized");
+}
+
 
 function updateLogoVisual(root, header, numeric, rank = null) {
   if (!header || !header._spRefs) return;
