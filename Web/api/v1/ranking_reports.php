@@ -1,7 +1,7 @@
 <?php
 // ranking_reports.php
 // Refactored: Extension Usage Stats (Rank, Member, Views, Total Votes, Searches)
-// v1.4: Reverted to source STRICTLY from 'members' table as requested.
+// v1.5: Reverted to source STRICTLY from 'members' table as requested.
 // Logic: If 'members' table is empty, report is empty.
 
 require_once 'cors.php';
@@ -54,10 +54,16 @@ try {
             COALESCE(ms.topic_votes, 0) as topic_votes,
             COALESCE(ms.post_votes, 0) as post_votes,
             (COALESCE(ms.topic_votes, 0) + COALESCE(ms.post_votes, 0)) as total_votes,
-            0 as searches
+            COALESCE(ms.searches_made, 0) as searches
         FROM members m
         LEFT JOIN member_stats ms ON m.member_id = ms.member_id
         WHERE m.member_id > 0
+          AND (
+            COALESCE(ms.page_views, 0) > 0 OR 
+            COALESCE(ms.topic_votes, 0) > 0 OR 
+            COALESCE(ms.post_votes, 0) > 0 OR 
+            COALESCE(ms.searches_made, 0) > 0
+          )
         ORDER BY $orderBy
         LIMIT :limit
     ";

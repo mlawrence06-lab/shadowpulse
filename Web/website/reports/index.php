@@ -41,53 +41,15 @@ include __DIR__ . '/../header.php';
                 </div>
             </li>
 
-            In Development:
-
             <li class="result-item">
                 <div class="result-title">
-                    Most visited boards
+                    <a href="most_visited.php">Most Visited Content</a>
                 </div>
                 <div class="result-meta">
-                    Ranking of boards by total visits / page views.
+                    Top ranked Members, Boards, Topics, and Posts by Page Views.
                 </div>
                 <div class="result-snippet">
-                    Show which Bitcointalk boards receive the most attention over a selected time range.
-                </div>
-            </li>
-
-            <li class="result-item">
-                <div class="result-title">
-                    Most visited topics
-                </div>
-                <div class="result-meta">
-                    Leaderboard of high‑traffic discussion threads.
-                </div>
-                <div class="result-snippet">
-                    Highlight trending and historically popular topics, sorted by view counts or custom metrics.
-                </div>
-            </li>
-
-            <li class="result-item">
-                <div class="result-title">
-                    Most visited posts
-                </div>
-                <div class="result-meta">
-                    Individual posts with exceptional visit volumes.
-                </div>
-                <div class="result-snippet">
-                    Surface posts that attract repeated attention, bookmarks, or off‑site referrals.
-                </div>
-            </li>
-
-            <li class="result-item">
-                <div class="result-title">
-                    Most visited profiles
-                </div>
-                <div class="result-meta">
-                    Member profiles receiving the most views.
-                </div>
-                <div class="result-snippet">
-                    See which users are checked the most, by rank, role, or user activity.
+                    Highlight trending and historically popular content sorted by total visits.
                 </div>
             </li>
         </ul>

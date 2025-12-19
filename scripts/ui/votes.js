@@ -59,6 +59,11 @@ export function createVotesZone(onVoteSelected, voteContext) {
     bottomRow.appendChild(summaryEl);
     zone.appendChild(bottomRow);
 
+    // WATERMARK (Background Text)
+    const watermark = createEl("div", ["sp-vote-watermark"]);
+    watermark.textContent = noun.toUpperCase(); // "TOPIC" or "POST"
+    zone.appendChild(watermark);
+
   }
 
   // --- MODE 2 & 3: INFO (Board / Profile) ---

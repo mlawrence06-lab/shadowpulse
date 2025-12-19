@@ -28,6 +28,8 @@ if (!isset($pageSubtitle)) {
             if (!isset($activePage)) {
                 if (strpos($_SERVER['SCRIPT_NAME'], '/reports/') !== false) {
                     $activePage = 'reports';
+                } elseif (strpos($_SERVER['SCRIPT_NAME'], 'search') !== false) {
+                    $activePage = 'search';
                 } else {
                     $activePage = 'dashboard'; // Default to dashboard for non-report pages
                 }
@@ -59,6 +61,11 @@ if (!isset($pageSubtitle)) {
                     class="nav-link <?php echo ($activePage === 'dashboard') ? 'nav-link-active' : ''; ?>">
                     <span class="dot" aria-hidden="true"></span>
                     <span>Dashboard</span>
+                </a>
+                <a href="/shadowpulse/website/search-bitlist.php"
+                    class="nav-link <?php echo ($activePage === 'search') ? 'nav-link-active' : ''; ?>">
+                    <span class="dot" aria-hidden="true"></span>
+                    <span>Search</span>
                 </a>
                 <a href="/shadowpulse/website/reports/index.php"
                     class="nav-link <?php echo ($activePage === 'reports') ? 'nav-link-active' : ''; ?>">

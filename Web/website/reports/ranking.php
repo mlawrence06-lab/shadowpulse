@@ -85,13 +85,14 @@ include __DIR__ . '/../header.php';
 
     <div class="content-body">
         <div class="sort-hint">
-            <i class="e-icons e-info"></i> Ranked by Total Votes by default. Click headers to sort.
+            <i class="e-icons e-info"></i> Ranked by Page Views by default. Click headers to sort.
         </div>
         <div id="container-grid" class="grid-container"></div>
     </div>
 </section>
 
-<div style="text-align: center; font-size: 0.8em; color: #666; margin-top: 20px; margin-bottom: 20px;">Ranking Report v1.6</div>
+<div style="text-align: center; font-size: 0.8em; color: #666; margin-top: 20px; margin-bottom: 20px;">Ranking Report
+    v1.17</div>
 
 <script>
     ej.base.registerLicense('Ngo9BigBOggjHTQxAR8/V1JFaF5cXGRCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWH1fc3RWRmlfWEF1WEtWYEg=');
@@ -107,17 +108,45 @@ include __DIR__ . '/../header.php';
             toolbar: ['Search'],
             width: '100%',
             allowTextWrap: false,
-            // Handle sort event if server-side sort needed, but client-side is fine for 100 items.
-            // If using backend sort, we'd implementation actionBegin. 
-            // For now, client sort of the top 100 is sufficient.
+            sortSettings: { columns: [{ field: 'page_views', direction: 'Descending' }] },
+
+            // STRICT DESCENDING SORT LOGIC
+            actionBegin: function (args) {
+                if (args.requestType === 'sorting') {
+                    // If the user tries to sort Ascending, we cancel and force Descending.
+                    if (args.direction === 'Ascending') {
+                        args.cancel = true;
+                        this.sortColumn(args.columnName, 'Descending');
+                    }
+                }
+            },
+
+            // Dynamic Rank Numbering via DOM manipulation (Failsafe)
+            dataBound: function (args) {
+                // Get all rendered rows
+                var rows = this.getRows();
+                var page = this.pageSettings.currentPage || 1;
+                var size = this.pageSettings.pageSize || 20;
+                var start = (page - 1) * size;
+
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    // Rank is the first column (index 0)
+                    var cell = row.querySelector('.e-rowcell');
+                    if (cell) {
+                        cell.innerText = (start + i + 1).toString();
+                    }
+                }
+            },
 
             columns: [
-                { field: 'Rank', headerText: 'Rank', width: 70, textAlign: 'Center' },
+                { field: 'Rank', headerText: 'Rank', width: 70, textAlign: 'Center', allowSorting: false },
                 {
                     field: 'Username',
                     headerText: 'Member',
                     width: 200,
                     textAlign: 'Left',
+                    allowSorting: false,
                     // Removed BTT Link as requested (Extension Member ID != Forum ID)
                     template: (props) => `<span style="color: #4ade80; font-weight: 500;">${props.Username}</span>`
                 },
@@ -140,6 +169,11 @@ include __DIR__ . '/../header.php';
             .then(res => res.json())
             .then(res => {
                 if (res.data) {
+                    // Force Default Sort: Page Views Descending
+                    res.data.sort((a, b) => Number(b.page_views) - Number(a.page_views));
+
+                    // No need to assign static Rank property anymore; queryCellInfo handles visual rank.
+
                     grid.dataSource = res.data;
                 } else if (res.error) {
                     console.error("API Error Payload:", res.error);

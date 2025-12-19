@@ -298,7 +298,7 @@ function buildSettingsModal(root) {
         applyBtn.disabled = true; // Stay disabled until input changes again
       } else {
         // Error State (Red)
-        console.error("API Error:", json.error);
+        // console.error("API Error:", json.error);
         nameInput.style.borderColor = "red";
         nameInput.style.color = "red";
         nameInput.title = json.error || "Unknown Error"; // Show tooltip
@@ -384,7 +384,7 @@ function buildSettingsModal(root) {
     return row;
   }
 
-  const diagUrl = "https://vod.fan/shadowpulse/website/reports/pyramid.php";
+  const diagUrl = "https://vod.fan/shadowpulse/website/reports/matrix.php";
 
   statsBlock.appendChild(makeStatRow("Page Views:", "sp-stat-page-views"));
   // 2) Remove "Active " and apply diagUrl

@@ -29,6 +29,7 @@ file_put_contents(__DIR__ . '/context_debug.log', $logRequest, FILE_APPEND);
 $memberUuid = isset($_GET['member_uuid']) ? trim($_GET['member_uuid']) : '';
 $category = isset($_GET['category']) ? trim($_GET['category']) : '';
 $targetId = isset($_GET['target_id']) ? (int) $_GET['target_id'] : 0;
+$title = isset($_GET['title']) ? trim($_GET['title'], " \t\n\r\0\x0B\"'") : null; // Basic sanitization
 
 if (empty($category)) {
     echo json_encode(['ok' => false, 'error' => 'Missing category']);
@@ -46,8 +47,9 @@ try {
     $pdo = sp_get_pdo();
 
     // 2. Call Stored Procedure
-    $stmt = $pdo->prepare("CALL shadowpulse_get_page_context(?, ?, ?)");
-    $stmt->execute([$memberUuid, $category, $targetId]);
+    // Updated to accept Optional Title (v0.35.2)
+    $stmt = $pdo->prepare("CALL shadowpulse_get_page_context(?, ?, ?, ?)");
+    $stmt->execute([$memberUuid, $category, $targetId, $title]);
 
     // 3. Extract Result Set 1: Member Stats & Bootstrap Info
     $memberStats = $stmt->fetch(PDO::FETCH_ASSOC);

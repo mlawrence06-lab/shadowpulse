@@ -15,29 +15,11 @@ import { getState } from "./state.js";
 // Retries removed to prevent server hammering.
 // All fetches now use standard fetch() and fail fast.
 
-export async function fetchPageContext(category, targetId) {
+export async function fetchPageContext(category, targetId, meta = {}) {
   if (!SP_CONFIG.GET_PAGE_CONTEXT_API) return null;
 
   try {
     const memberUuid = await getOrCreateMemberUuid();
-
-    // Cache Key
-    const CACHE_KEY = `sp_ctx_v2_${category}_${targetId}`;
-    const CACHE_TTL = 30 * 1000; // 30s
-
-    // 1. Check Cache (DISABLED for accurate Page View tracking)
-    /*
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const entry = JSON.parse(cached);
-        if (Date.now() - entry.timestamp < CACHE_TTL) {
-          // console.log("[ShadowPulse] Restoring Context from cache");
-          return entry.data;
-        }
-      }
-    } catch (e) { }
-    */
 
     // 2. Fetch
     const url = new URL(SP_CONFIG.GET_PAGE_CONTEXT_API);
@@ -45,6 +27,10 @@ export async function fetchPageContext(category, targetId) {
     url.searchParams.append("category", category);
     url.searchParams.append("target_id", targetId);
     url.searchParams.append("t", Date.now());
+
+    // Optional Metadata (Title, Author)
+    if (meta.title) url.searchParams.append("title", meta.title);
+    if (meta.author) url.searchParams.append("author", meta.author);
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -329,7 +329,15 @@ async function hydrateFullContext(root, header, voteContext) {
     const cat = ctx.voteCategory || "topic";
     const tid = ctx.targetId || 0;
 
-    const fullData = await fetchPageContext(cat, tid);
+    // Scrape Metadata
+    const meta = {};
+    if (cat === 'topic' || cat === 'post') {
+      const fullTitle = document.title || "";
+      // Remove " - Bitcoin Forum" suffix if present
+      meta.title = fullTitle.replace(" - Bitcoin Forum", "").trim();
+    }
+
+    const fullData = await fetchPageContext(cat, tid, meta);
 
     if (!fullData || !fullData.ok) {
       // Handle offline/error?
@@ -438,6 +446,11 @@ async function hydrateFullContext(root, header, voteContext) {
 
     // Member Bootstrap is now implicit in first hydrate
     const memberUuid = await getOrCreateMemberUuid();
+
+    // v0.34.4 FIX: Explicitly bootstrap (register) the member before fetching context.
+    // This prevents 500 Errors on the backend if the SP assumes existence.
+    try { await bootstrapMember(memberUuid); } catch (e) { }
+
     spLog("ShadowPulse build", SP_CONFIG.VERSION);
     spLog("ShadowPulse member UUID", memberUuid);
     // trackPageView(memberUuid); // Removed: Handled in SP now.

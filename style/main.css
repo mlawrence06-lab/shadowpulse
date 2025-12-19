@@ -330,9 +330,35 @@ body.sp-dragging {
   /* Centering Fix */
   align-items: center;
   text-align: center;
+  position: relative;
+  /* Ensure relative positioning for absolute child */
+  overflow: hidden;
+  /* Clip the watermark */
 }
 
+/* Watermark Text */
+.sp-vote-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--sp-accent);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+  white-space: nowrap;
+  letter-spacing: 2px;
+  user-select: none;
+}
+
+/* Ensure content sits above watermark */
 .sp-votes-row {
+  position: relative;
+  z-index: 1;
+
   display: flex;
   align-items: center;
   justify-content: center;

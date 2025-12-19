@@ -1,7 +1,7 @@
 <?php
-// top_charts.php
-$pageTitle = "Top Charts";
-$pageSubtitle = "Top Ranked Content & Members";
+// most_visited.php
+$pageTitle = "Most Visited";
+$pageSubtitle = "Popular Content by Page Views";
 $activePage = 'reports';
 include __DIR__ . '/../header.php';
 ?>
@@ -29,11 +29,9 @@ include __DIR__ . '/../header.php';
     .dashboard-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        /* Two Columns */
         gap: 20px;
         width: 100%;
         max-width: 1400px;
-        /* Constrain max width */
         margin: 0 auto;
     }
 
@@ -67,14 +65,13 @@ include __DIR__ . '/../header.php';
         text-decoration: underline;
     }
 
-    /* Responsive: Stack on mobile */
+    /* Responsive */
     @media (max-width: 1000px) {
         .dashboard-grid {
             grid-template-columns: 1fr;
         }
     }
 
-    /* OVERRIDE GLOBAL LAYOUT FOR THIS PAGE TO ALLOW FULL WIDTH */
     .site-main {
         display: block !important;
         width: 100% !important;
@@ -88,8 +85,8 @@ include __DIR__ . '/../header.php';
 
 <section class="content">
     <div class="content-header" style="text-align: center; margin-bottom: 20px;">
-        <div class="content-title">Top Charts</div>
-        <div class="content-subtitle">Global Rankings</div>
+        <div class="content-title">Most Visited</div>
+        <div class="content-subtitle">Content with the highest number of page views within ShadowPulse</div>
     </div>
 
     <div class="content-body">
@@ -97,25 +94,25 @@ include __DIR__ . '/../header.php';
 
             <!-- 1. Top Profiles -->
             <div class="chart-card">
-                <div class="card-title">Top Ranked Profiles (Score)</div>
+                <div class="card-title">Most Visited Profiles</div>
                 <div id="grid-members"></div>
             </div>
 
             <!-- 2. Top Boards -->
             <div class="chart-card">
-                <div class="card-title">Top Ranked Boards</div>
+                <div class="card-title">Most Visited Boards</div>
                 <div id="grid-boards"></div>
             </div>
 
             <!-- 3. Top Topics -->
             <div class="chart-card">
-                <div class="card-title">Top Ranked Topics</div>
+                <div class="card-title">Most Visited Topics</div>
                 <div id="grid-topics"></div>
             </div>
 
             <!-- 4. Top Posts -->
             <div class="chart-card">
-                <div class="card-title">Top Ranked Posts</div>
+                <div class="card-title">Most Visited Posts</div>
                 <div id="grid-posts"></div>
             </div>
 
@@ -129,35 +126,33 @@ include __DIR__ . '/../header.php';
     const chartConfigs = {
         'members': {
             header: 'Member',
-            valHeader: 'Score',
-            valField: 'score',
-            format: 'N2',
+            valHeader: 'Views',
+            valField: 'views',
+            format: 'N0',
             template: (props) => `<a href="https://bitcointalk.org/index.php?action=profile;u=${props.id}" target="_blank" class="chart-link">${props.label}</a>`
         },
         'boards': {
             header: 'Board',
-            valHeader: 'Score',
-            valField: 'score',
-            format: 'N2',
+            valHeader: 'Views',
+            valField: 'views',
+            format: 'N0',
             template: (props) => `<a href="https://bitcointalk.org/index.php?board=${props.id}.0" target="_blank" class="chart-link">${props.label}</a>`
         },
         'topics': {
             header: 'Topic',
-            valHeader: 'Score',
-            valField: 'score',
-            format: 'N2',
+            valHeader: 'Views',
+            valField: 'views',
+            format: 'N0',
             template: (props) => `<a href="https://bitcointalk.org/index.php?topic=${props.id}.0" target="_blank" class="chart-link">${props.label}</a>`
         },
         'posts': {
             header: 'Post',
-            valHeader: 'Score',
-            valField: 'score',
-            format: 'N2',
+            valHeader: 'Views',
+            valField: 'views',
+            format: 'N0',
             template: (props) => {
-                // Link format: index.php?topic=TOPIC_ID.msgPOST_ID#msgPOST_ID
-                // Label format: Post ID (Member Name)
-                let displayLabel = props.label
-                    ? props.label
+                let displayLabel = props.label 
+                    ? props.label 
                     : (props.author_name ? `Post ${props.id} (${props.author_name})` : `Post ${props.id}`);
 
                 if (props.topic_id && props.topic_id > 0) {
@@ -169,7 +164,8 @@ include __DIR__ . '/../header.php';
     };
 
     function loadGrid(targetId, action) {
-        fetch(`../../api/v1/top_lists.php?action=${action}&limit=50`)
+        // Fetch with sort=views
+        fetch(`../../api/v1/top_lists.php?action=${action}&limit=50&sort=views`)
             .then(r => r.json())
             .then(res => {
                 if (res.ok) {
@@ -189,7 +185,7 @@ include __DIR__ . '/../header.php';
                             {
                                 field: 'label',
                                 headerText: config.header,
-                                width: 250, // Increased for names
+                                width: 250,
                                 template: config.template
                             },
                             {
@@ -222,5 +218,5 @@ include __DIR__ . '/../header.php';
     });
 </script>
 
-<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Top Charts Report v1.18</div>
+<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Most Visited Report v3.1</div>
 <?php include __DIR__ . '/../footer.php'; ?>

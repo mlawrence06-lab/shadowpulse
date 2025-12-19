@@ -108,8 +108,7 @@ function bulk_save_metadata($pdo, $posts)
                 (isset($post['user_id']) ? (int) $post['user_id'] : 0));
 
         $rawTitle = isset($post['subject']) ? strip_tags($post['subject']) : (isset($post['title']) ? strip_tags($post['title']) : '');
-        $cleanTitle = preg_replace('/^Re:\s*/i', '', $rawTitle); // For Topic Title logic
-        // Use $rawTitle for Post Subject (includes Re:)
+        $cleanTitle = preg_replace('/^Re:\s*/i', '', $rawTitle);
 
         $authorName = isset($post['author']) ? strip_tags($post['author']) : '';
 
@@ -122,22 +121,20 @@ function bulk_save_metadata($pdo, $posts)
         if ($pid > 0 && $tid > 0) {
             // Updated to UPSERT to fix missing data if record existed
             $stmtMetaUpsert = $pdo->prepare("
-                INSERT INTO content_metadata (post_id, topic_id, board_id, author_id, author_name, post_subject) 
-                VALUES (:pid, :tid, :bid, :aid, :aname, :subject)
+                INSERT INTO content_metadata (post_id, topic_id, board_id, author_id, author_name) 
+                VALUES (:pid, :tid, :bid, :aid, :aname)
                 ON DUPLICATE KEY UPDATE 
                     topic_id = VALUES(topic_id),
                     board_id = VALUES(board_id),
                     author_id = VALUES(author_id),
-                    author_name = VALUES(author_name),
-                    post_subject = VALUES(post_subject)
+                    author_name = VALUES(author_name)
             ");
             $stmtMetaUpsert->execute([
                 ':pid' => $pid,
                 ':tid' => $tid,
                 ':bid' => $bid,
                 ':aid' => $aid,
-                ':aname' => $authorName,
-                ':subject' => $rawTitle
+                ':aname' => $authorName
             ]);
         }
     }
@@ -210,15 +207,23 @@ function get_ninja_post_info($pdo, $post_id)
             // Check if it's inside data.posts like the other endpoint
             $posts = [];
             if (isset($json['data'])) {
+                echo "Data is set.\n";
                 if (is_array($json['data'])) {
+                    echo "Data is Array.\n";
                     // Check if 'data' ITSELF is the list of posts (api/posts/ID returns this)
                     if (isset($json['data'][0]) && (isset($json['data'][0]['post_id']) || isset($json['data'][0]['id']))) {
+                        echo "Parsing Match: Direct Data Array.\n";
                         $posts = $json['data'];
                     }
                     // Or if it's wrapped in data.posts (api/posts?topic_id=X returns this)
                     elseif (isset($json['data']['posts'])) {
+                        echo "Parsing Match: Data.Posts.\n";
                         $posts = $json['data']['posts'];
+                    } else {
+                        echo "Parsing: No Match inside Data.\n";
                     }
+                } else {
+                    echo "Data is NOT Array.\n";
                 }
             } elseif (isset($json['posts']))
                 $posts = $json['posts'];
@@ -237,12 +242,12 @@ function get_ninja_post_info($pdo, $post_id)
                 // Return the data for this specific post
                 foreach ($posts as $p) {
                     $pid = isset($p['post_id']) ? (int) $p['post_id'] : (isset($p['id']) ? (int) $p['id'] : 0);
+                    echo "Check: $pid vs $post_id\n";
                     if ($pid == $post_id) {
                         return [
                             'author_name' => isset($p['author']) ? strip_tags($p['author']) : '',
                             'topic_id' => isset($p['topic_id']) ? (int) $p['topic_id'] : 0,
-                            'author_uid' => isset($p['author_uid']) ? (int) $p['author_uid'] : 0,
-                            'title' => isset($p['subject']) ? strip_tags($p['subject']) : (isset($p['title']) ? strip_tags($p['title']) : '')
+                            'author_uid' => isset($p['author_uid']) ? (int) $p['author_uid'] : 0
                         ];
                     }
                 }
