@@ -10,8 +10,10 @@ require_once __DIR__ . '/header.php';
     <section style="margin-bottom: 40px;">
         <h2 style="color: var(--sp-text-primary); margin-bottom: 15px;">Core Philosophy</h2>
         <p style="margin-bottom: 15px; line-height: 1.6;">
-            ShadowPulse was designed with a "privacy-first" architecture. We believe analytical tools should respect the
-            user's anonymity and the integrity of the platform they operate on.
+            ShadowPulse was designed with a "privacy-first" architecture. The name "Shadow" is a deliberate nod to our
+            operational philosophy: to remain completely unseen and unobtrusive, leaving no digital footprint. We
+            believe analytical tools should respect the user's anonymity and the integrity of the platform they operate
+            on.
         </p>
         <p style="margin-bottom: 15px; line-height: 1.6;">
             Our extension operates as an overlay. It does not scrape your private data, it does not read your private
@@ -117,7 +119,7 @@ require_once __DIR__ . '/header.php';
         </p>
     </section>
 
-    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">v4</div>
+    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">v5</div>
 </div>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
