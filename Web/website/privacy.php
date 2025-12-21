@@ -24,9 +24,13 @@ require_once __DIR__ . '/header.php';
 
         <h3 style="color: var(--sp-text-primary); font-size: 1.2rem; margin-bottom: 10px;">User Identity</h3>
         <p style="margin-bottom: 15px; line-height: 1.6;">
-            We do not associate your ShadowPulse usage with your Bitcointalk user profile. When you install the
-            extension, a random unique identifier (UUID) is generated. This UUID is used solely to prevent vote spamming
-            and to count unique views. It is not linked to your IP address, email, or forum account.
+            We do not associate your ShadowPulse usage with your Bitcointalk user profile. <strong>It is impossible for
+                us to tie your extension usage to your forum account or real-world identity.</strong>
+        </p>
+        <p style="margin-bottom: 15px; line-height: 1.6;">
+            We <strong>do not</strong> track, log, or store your IP address. While the web server may collect standard
+            connection logs for security (as all websites do), this data is never linked to your unique extension
+            identifier. Your activity remains completely anonymous.
         </p>
 
         <h3 style="color: var(--sp-text-primary); font-size: 1.2rem; margin-bottom: 10px;">Page Interaction</h3>
@@ -90,7 +94,7 @@ require_once __DIR__ . '/header.php';
             contacting the developer via PM on the forum or deleting the extension (which discards your UUID key).
         </p>
     </section>
-    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">Privacy Policy v1</div>
+    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">Privacy Policy v2</div>
 </div>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
