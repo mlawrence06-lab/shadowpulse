@@ -614,6 +614,17 @@ function applyMemberIdentity(backdrop, memberId, memberUuid, restoreAck) {
       const text = codeEl.textContent || "";
       try {
         await navigator.clipboard.writeText(text);
+
+        // Visual Feedback (v0.37.2)
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = "Copied to Clipboard!";
+        copyBtn.title = "Code copied to clipboard";
+
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.title = "";
+        }, 2000);
+
       } catch (_) { }
     };
   }
