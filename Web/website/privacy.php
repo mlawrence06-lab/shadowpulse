@@ -86,7 +86,8 @@ require_once __DIR__ . '/header.php';
         </ul>
         <p style="margin-bottom: 15px; line-height: 1.6;">
             The extension <strong>does not</strong> use third-party tracking cookies or external advertising trackers
-            (like Google or Facebook). Extension ads are served directly from our own infrastructure for privacy.
+            (like Google or Facebook). Extension ads, Bitcoin price data, and all other dynamic content are served
+            directly from our own infrastructure for privacy.
         </p>
 
         <h3 style="color: var(--sp-text-primary); font-size: 1.2rem; margin-bottom: 10px;">Website (vod.fan)</h3>
@@ -119,7 +120,7 @@ require_once __DIR__ . '/header.php';
         </p>
     </section>
 
-    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">v5</div>
+    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">v6</div>
 </div>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
