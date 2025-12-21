@@ -37,7 +37,7 @@ if (!isset($pageSubtitle)) {
             ?>
             <a href="/shadowpulse/website/" class="brand" style="text-decoration: none;">
                 <div class="brand-logo" aria-hidden="true">
-                    <img src="/shadowpulse/website/images/logo_web.svg" alt="ShadowPulse Logo" width="32" height="32"
+                    <img src="/shadowpulse/website/images/logo_web.svg" alt="ShadowPulse Logo" width="48" height="48"
                         style="display:block; border-radius: 50%;">
                 </div>
                 <div class="brand-text">
