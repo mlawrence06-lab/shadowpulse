@@ -57,6 +57,13 @@ require_once __DIR__ . '/header.php';
             to provide a human-readable label (e.g., "Bitcoin Discussion") for the statistics database when you visit a
             page. We do not analyze the text of posts, signatures, or user profiles.
         </p>
+
+        <h3 style="color: var(--sp-text-primary); font-size: 1.2rem; margin-bottom: 10px;">Search Privacy</h3>
+        <p style="margin-bottom: 15px; line-height: 1.6;">
+            When using the search feature, we do <strong>not</strong> record your UUID or link the individual search
+            query to your profile. We only aggregate the search term and its timestamp to identify platform trends and
+            statistics. Individual search history is never tracked.
+        </p>
         </p>
     </section>
 
@@ -100,13 +107,7 @@ require_once __DIR__ . '/header.php';
         </p>
     </section>
 
-    <section style="margin-bottom: 40px;">
-        <h2 style="color: var(--sp-text-primary); margin-bottom: 15px;">Contact</h2>
-        <p style="margin-bottom: 15px; line-height: 1.6;">
-            If you have specific concerns about your data, you can request a deletion of your randomized profile by
-            contacting the developer via PM on the forum or deleting the extension (which discards your UUID key).
-        </p>
-    </section>
+
     <section style="margin-bottom: 40px;">
         <h2 style="color: var(--sp-text-primary); margin-bottom: 15px;">Data Retention</h2>
         <p style="margin-bottom: 15px; line-height: 1.6;">
@@ -116,7 +117,7 @@ require_once __DIR__ . '/header.php';
         </p>
     </section>
 
-    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">Privacy Policy v3</div>
+    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">v4</div>
 </div>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
