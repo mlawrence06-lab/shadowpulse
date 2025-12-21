@@ -256,74 +256,64 @@ export function parseBitcointalkPage(urlString) {
     return Number.isNaN(n) ? null : n;
   }
 
-  // --- 1. HOME ---
-  if (
-    (path === "/" || path === "" || path === "/index.php") &&
-    !params.has("board") &&
-    !params.has("topic") &&
-    !action
-  ) {
-    ctx.kind = "special";
-    ctx.pageTitle = "Bitcointalk Home";
-    ctx.pageSubtitle = "";
-    return ctx;
-  }
+  // --- 1. HOME & SPECIAL PAGES (By Path) ---
+  // Deleted hardcoded checks to fallback to document.title
 
-  // --- 2. SPECIAL PAGES (By Path) ---
-  // MODIFIED: Consolidate title and subtitle
-  const specialPathMap = {
-    "/more.php": "More Options",
-    "/donate.html": "Donation Information",
-    "/privacy.php": "Privacy Policy",
-    "/sbounties.php": "Security Bounties",
-    "/contact.php": "Contact Information"
-  };
-
-  if (specialPathMap[path]) {
-    ctx.kind = "special";
-    ctx.pageTitle = specialPathMap[path];
-    ctx.pageSubtitle = "";
-    return ctx;
-  }
 
   // --- 3. ACTIONS (index.php?action=...) ---
+  // --- 2. ACTIONS (index.php?action=...) ---
   if (action) {
-    if (action === "search") {
+    /* 
+       Specific Action Overrides (User requested specific names)
+    */
+    const ACTION_OVERRIDES = {
+      "mlist": "Viewing Members (Disabled)"
+    };
+
+    if (ACTION_OVERRIDES[action]) {
       ctx.kind = "special";
-      ctx.pageTitle = "Search";
-      ctx.pageSubtitle = "";
-      return ctx;
-    }
-    if (action === "pm") {
-      ctx.kind = "special";
-      ctx.pageTitle = "Private Messages";
-      ctx.pageSubtitle = "";
-      return ctx;
-    }
-    if (action === "mlist") {
-      ctx.kind = "special";
-      ctx.pageTitle = "Member List (Disabled)";
-      ctx.pageSubtitle = "";
-      return ctx;
-    }
-    if (action === "merit") {
-      ctx.kind = "special";
-      ctx.pageTitle = "Merit Summary";
+      ctx.pageTitle = ACTION_OVERRIDES[action];
       ctx.pageSubtitle = "";
       return ctx;
     }
 
-    if (action === "trust") {
-      const uRaw = params.get("u");
-      ctx.kind = "special";
-      ctx.pageTitle = uRaw ? "Trust Summary" : "Modify Trust List";
-      ctx.pageSubtitle = "";
-      return ctx;
-    }
+
 
     if (action === "profile") {
       // Profile variants
       const uRaw = params.get("u");
+
+      // RESTORED: Treat ALL Sub-Actions (except 'summary') as Special/Disabled
+      if (sa && sa !== "summary") {
+        ctx.kind = "special";
+
+        // Privacy Override Table for sensitive sub-pages
+        const PRIVACY_TITLES = {
+          "showposts": "Latest Posts",
+          "statpanel": "Stats Panel",
+          "account": "Account Settings",
+          "forumprofile": "Profile Settings",
+          "theme": "Theme Settings",
+          "notification": "Notifications",
+          "avatar": "Avatar Settings",
+          "pm": "Private Messages"
+        };
+
+        // Use Privacy Title OR Dynamic Title
+        if (PRIVACY_TITLES[sa]) {
+          ctx.pageTitle = PRIVACY_TITLES[sa] + " (Disabled)"; // Optional suffix? User disliked it.
+          // User removed suffix in Step 414. "Why are you appending Disabled?"
+          // So I should NOT append Disabled.
+          ctx.pageTitle = PRIVACY_TITLES[sa];
+        } else {
+          let t = document.title || "Page";
+          ctx.pageTitle = t.replace(" - Bitcoin Forum", "").trim();
+        }
+
+        ctx.pageSubtitle = "";
+        return ctx;
+      }
+
       const userId = parseLeadingInt(uRaw);
 
       if (!userId) {
@@ -345,8 +335,10 @@ export function parseBitcointalkPage(urlString) {
     }
 
     // Generic fallback for other actions
+    // Generic fallback for other actions (help, calendar, login, etc.)
     ctx.kind = "special";
-    ctx.pageTitle = "Unknown Page";
+    let t = document.title || "Unknown Page";
+    ctx.pageTitle = t.replace(" - Bitcoin Forum", "").trim();
     ctx.pageSubtitle = "";
     return ctx;
   }
@@ -408,7 +400,9 @@ export function parseBitcointalkPage(urlString) {
 
   // Fallback
   ctx.kind = "special";
-  ctx.pageTitle = "Unknown Page";
+  // Dynamic document title extraction
+  let t = document.title || "Page";
+  ctx.pageTitle = t.replace(" - Bitcoin Forum", "").trim();
   ctx.pageSubtitle = "";
 
   return ctx;

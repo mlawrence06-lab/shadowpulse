@@ -59,6 +59,13 @@ require_once __DIR__ . '/header.php';
             to provide a human-readable label (e.g., "Bitcoin Discussion") for the statistics database when you visit a
             page. We do not analyze the text of posts, signatures, or user profiles.
         </p>
+        <p
+            style="margin-bottom: 15px; line-height: 1.6; font-style: italic; border-left: 3px solid #4ade80; padding-left: 10px;">
+            <strong>Privacy Exemption:</strong> When you visit your own profile page (e.g. <code>action=profile</code>
+            without a user ID), the extension intentionally <strong>ignores</strong> the page title (which contains your
+            username) and instead reports a generic label ("Profile (Self)"). This prevents your username from being
+            associated with your anonymous ShadowPulse UUID.
+        </p>
 
         <h3 style="color: var(--sp-text-primary); font-size: 1.2rem; margin-bottom: 10px;">Search Privacy</h3>
         <p style="margin-bottom: 15px; line-height: 1.6;">

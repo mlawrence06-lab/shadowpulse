@@ -1,1 +1,0 @@
-SHOW CREATE PROCEDURE shadowpulse_get_page_context;

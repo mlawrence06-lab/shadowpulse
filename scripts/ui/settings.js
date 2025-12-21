@@ -63,7 +63,8 @@ export async function openSettingsModal(root) {
         }
       }
     } catch (err) {
-      console.error("[ShadowPulse] Stats fetch failed:", err);
+      // Suppress intermittent network errors for stats
+      // console.warn("[ShadowPulse] Stats fetch failed (offline or blocked).");
     }
   })();
 }
@@ -145,6 +146,27 @@ function buildSettingsModal(root) {
   searchRow.appendChild(searchLabel);
   searchRow.appendChild(searchSelect);
   settingsBlock.appendChild(searchRow);
+
+  // 3. POST/TOPIC Helper
+  const helperRow = createEl("div", ["sp-settings-row"]);
+  const helperLabel = createEl("span", ["sp-settings-row-label"]);
+  helperLabel.textContent = "POST/TOPIC Helper:";
+
+  const helperSelect = createEl("select", ["sp-settings-select"]);
+  helperSelect.appendChild(new Option("On", "on"));
+  helperSelect.appendChild(new Option("Off", "off"));
+
+  helperSelect.addEventListener("change", async () => {
+    const val = helperSelect.value === "on";
+    await setState("voteHelper", val);
+    savePreferences({ voteHelper: val });
+  });
+
+  getState("voteHelper", true).then(val => { helperSelect.value = val ? "on" : "off"; });
+
+  helperRow.appendChild(helperLabel);
+  helperRow.appendChild(helperSelect);
+  settingsBlock.appendChild(helperRow);
 
   // 3. Bitcoin Source
   const btcRow = createEl("div", ["sp-settings-row"]);
@@ -532,11 +554,13 @@ function buildSettingsModal(root) {
   closeBtn.addEventListener("click", (e) => {
     e.preventDefault();
     backdrop.classList.remove("sp-settings-open");
+    window.dispatchEvent(new CustomEvent("sp-settings-closed"));
   });
 
   backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) {
       backdrop.classList.remove("sp-settings-open");
+      window.dispatchEvent(new CustomEvent("sp-settings-closed"));
     }
   });
 

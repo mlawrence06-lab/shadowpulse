@@ -1,5 +1,5 @@
 BETA Install Instructions
-0.35 - members the same as previous beta
+0.37 - members WIPED for final testing
 
 In order:
 1) Remove any older extensions and close all bitcointalk tabs in all browsers

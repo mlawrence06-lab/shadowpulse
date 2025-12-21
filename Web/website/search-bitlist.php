@@ -15,13 +15,14 @@ $results = [];
 $errorMessage = '';
 
 if ($term !== '') {
+    // API has a hard limit of 20 results and ignores pagination.
     $url = $apiBase . '?searchTerm=' . rawurlencode($term);
 
     try {
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Increased timeout slightly
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
             $body = curl_exec($ch);
@@ -53,7 +54,7 @@ if ($term !== '') {
             $context = stream_context_create([
                 'http' => [
                     'method' => 'GET',
-                    'timeout' => 10,
+                    'timeout' => 15,
                 ]
             ]);
             $body = @file_get_contents($url, false, $context);
@@ -138,6 +139,20 @@ include __DIR__ . '/header.php';
         padding: 15px;
         border-bottom: 1px solid #333;
         text-align: left;
+        display: flex;
+        gap: 15px;
+    }
+
+    .result-number {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #666;
+        min-width: 40px;
+        text-align: right;
+    }
+
+    .result-content {
+        flex: 1;
     }
 
     .result-title {
@@ -168,6 +183,13 @@ include __DIR__ . '/header.php';
     .search-empty {
         text-align: center;
         color: #888;
+    }
+
+    .limit-warning {
+        font-size: 0.8em;
+        color: #888;
+        text-align: right;
+        margin-bottom: 10px;
     }
 </style>
 
@@ -211,9 +233,15 @@ include __DIR__ . '/header.php';
             <?php endif; ?>
 
             <?php if (!empty($results)): ?>
+                <!-- Result Stats -->
+                <div class="limit-warning">
+                    Found <?php echo count($results); ?> results (API Limit: 20 max)
+                </div>
+
                 <ul class="result-list">
-                    <?php foreach ($results as $row): ?>
-                        <?php
+                    <?php
+                    $globalIndex = 1;
+                    foreach ($results as $row):
                         $title = isset($row['title']) ? (string) $row['title'] : 'Untitled';
                         $topicId = isset($row['topic_id']) ? (int) $row['topic_id'] : 0;
                         $postId = isset($row['post_id']) ? (int) $row['post_id'] : 0;
@@ -227,30 +255,36 @@ include __DIR__ . '/header.php';
                         $date = isset($row['date']) ? (string) $row['date'] : '';
                         ?>
                         <li class="result-item">
-                            <a class="result-title" href="<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>"
-                                target="_blank" rel="noopener">
-                                <?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>
-                            </a>
-                            <?php if ($snippet !== ''): ?>
-                                <div class="result-snippet"><?php echo htmlspecialchars($snippet, ENT_QUOTES, 'UTF-8'); ?></div>
-                            <?php endif; ?>
-                            <div class="result-meta">
-                                <?php if ($author)
-                                    echo "by " . htmlspecialchars($author) . " "; ?>
-                                <?php if ($boardName)
-                                    echo "in " . htmlspecialchars($boardName) . " "; ?>
-                                <?php if ($date)
-                                    echo "on " . htmlspecialchars($date); ?>
+                            <div class="result-number">#<?php echo $globalIndex; ?></div>
+                            <div class="result-content">
+                                <a class="result-title" href="<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>"
+                                    target="_blank" rel="noopener">
+                                    <?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>
+                                </a>
+                                <?php if ($snippet !== ''): ?>
+                                    <div class="result-snippet"><?php echo htmlspecialchars($snippet, ENT_QUOTES, 'UTF-8'); ?></div>
+                                <?php endif; ?>
+                                <div class="result-meta">
+                                    <?php if ($author)
+                                        echo "by " . htmlspecialchars($author) . " "; ?>
+                                    <?php if ($boardName)
+                                        echo "in " . htmlspecialchars($boardName) . " "; ?>
+                                    <?php if ($date)
+                                        echo "on " . htmlspecialchars($date); ?>
+                                </div>
                             </div>
                         </li>
-                    <?php endforeach; ?>
+                        <?php
+                        $globalIndex++;
+                    endforeach;
+                    ?>
                 </ul>
             <?php endif; ?>
         </div>
     </section>
 
     <div style="text-align: center; font-size: 0.8em; color: #666; margin-top: 20px; margin-bottom: 20px;">Bitlist
-        Search v4</div>
+        Search v5</div>
 
 </div>
 

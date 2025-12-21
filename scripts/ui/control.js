@@ -17,12 +17,15 @@ import { createEl } from "../core/utils.js";
  * @param {Function} callbacks.onAutoMin
  * @param {Function} callbacks.onSettings
  */
-export function createControlZone({ onMinimize, onAutoMin, onSettings }) {
+export function createControlZone({ onAutoMin, onSettings, onReports }) {
   const zone = createEl("div", ["sp-zone", "sp-zone-control"]);
 
-  zone.appendChild(makeLink("MINIMIZE", "sp-ctrl-minimize", onMinimize));
+  // Removed MINIMIZE link per user request (v0.36.34)
+  // zone.appendChild(makeLink("MINIMIZE", "sp-ctrl-minimize", onMinimize));
+
   zone.appendChild(makeLink("AUTO MIN", "sp-ctrl-auto-min", onAutoMin));
   zone.appendChild(makeLink("SETTINGS", "sp-ctrl-settings", onSettings));
+  zone.appendChild(makeLink("REPORTS", "sp-ctrl-reports", onReports));
 
   return zone;
 }

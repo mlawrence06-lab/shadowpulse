@@ -20,16 +20,17 @@ header("Pragma: no-cache");
 // Debug Logging
 $logRequest = date('[Y-m-d H:i:s] ') . "CTX_REQ: uuid=" . ($memberUuid ?? 'x') . " cat=" . ($category ?? 'x') . " id=" . ($targetId ?? 'x') . "\n";
 file_put_contents(__DIR__ . '/context_debug.log', $logRequest, FILE_APPEND);
-// Enable Error Reporting for Debugging (Temporary) - REMOVED
-// ini_set('display_errors', 0);
-// error_reporting(0);
+// Enable Error Reporting for Debugging (Temporary) - ENABLED
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 // session_start(); // REMOVED: Causes blocking with concurrent requests
 
 // 1. Inputs
 $memberUuid = isset($_GET['member_uuid']) ? trim($_GET['member_uuid']) : '';
 $category = isset($_GET['category']) ? trim($_GET['category']) : '';
 $targetId = isset($_GET['target_id']) ? (int) $_GET['target_id'] : 0;
-$title = isset($_GET['title']) ? trim($_GET['title'], " \t\n\r\0\x0B\"'") : null; // Basic sanitization
+$title = isset($_GET['title']) ? trim($_GET['title'], " \t\n\r\0\x0B\"'") : null;
+$url = isset($_GET['url']) ? trim($_GET['url']) : null;
 
 if (empty($category)) {
     echo json_encode(['ok' => false, 'error' => 'Missing category']);
@@ -47,9 +48,9 @@ try {
     $pdo = sp_get_pdo();
 
     // 2. Call Stored Procedure
-    // Updated to accept Optional Title (v0.35.2)
-    $stmt = $pdo->prepare("CALL shadowpulse_get_page_context(?, ?, ?, ?)");
-    $stmt->execute([$memberUuid, $category, $targetId, $title]);
+    // Updated to accept Optional Title and URL (v0.36.25)
+    $stmt = $pdo->prepare("CALL shadowpulse_get_page_context(?, ?, ?, ?, ?)");
+    $stmt->execute([$memberUuid, $category, $targetId, $title, $url]);
 
     // 3. Extract Result Set 1: Member Stats & Bootstrap Info
     $memberStats = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -147,6 +148,7 @@ try {
                 'label' => $context['target_label']
             ]
         ],
+
         'btc_stats' => $btcData
     ];
 
@@ -171,6 +173,6 @@ try {
 
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['ok' => false, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 }
 ?>

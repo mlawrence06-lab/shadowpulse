@@ -97,7 +97,7 @@ include __DIR__ . '/../header.php';
 
             <!-- 1. Top Profiles -->
             <div class="chart-card">
-                <div class="card-title">Top Ranked Profiles (Score)</div>
+                <div class="card-title">Top Ranked Profiles</div>
                 <div id="grid-members"></div>
             </div>
 
@@ -222,5 +222,5 @@ include __DIR__ . '/../header.php';
     });
 </script>
 
-<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Top Charts Report v1.18</div>
+<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Top Charts Report v19</div>
 <?php include __DIR__ . '/../footer.php'; ?>

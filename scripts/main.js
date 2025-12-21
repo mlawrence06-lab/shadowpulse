@@ -104,12 +104,23 @@ function updateLogoVisual(root, header, numeric, rank = null) {
   }
 }
 
-function buildRoot(theme) {
-  const root = createEl("div", ["sp-root"], { id: SP_CONFIG.ROOT_ID });
+function buildRoot(theme, isMinimized = false, savedLeft = null) {
+  const classes = ["sp-root"];
+  if (isMinimized) classes.push("sp-root-minimized");
+
+  const root = createEl("div", classes, { id: SP_CONFIG.ROOT_ID });
   root.style.position = "fixed";
   root.classList.add(`sp-theme-${theme}`);
-  root.style.left = "50%";
-  root.style.transform = "translateX(-50%)";
+
+  // v0.36.35 FIX: Apply Saved Position immediately
+  if (typeof savedLeft === "number") {
+    root.style.left = savedLeft + "px";
+    root.style.transform = "none";
+  } else {
+    root.style.left = "50%";
+    root.style.transform = "translateX(-50%)";
+  }
+
   root.style.bottom = "16px";
   root.style.zIndex = String(SP_CONFIG.Z_INDEX_ROOT);
   document.body.appendChild(root);
@@ -169,37 +180,29 @@ function buildToolbar(root, voteContext) {
 
 
   // 5) control (IMMEDIATE)
+  // 5) control (IMMEDIATE)
   const controlZone = createControlZone({
-    onMinimize: () => {
-      const nowMin = !root.classList.contains("sp-root-minimized");
-      applyMinimizedState(root, nowMin);
-
-      // When minimized/restored, immediately re-run load/update
-      if (!nowMin) {
-        // Trigger ASAP load/refresh when restoring from minimize
-        hydrateAds(header);
-        hydrateVoteAndLogo(root, header, voteContext);
-
-        // Trigger Stats data refresh
-        const isMinimized = root.classList.contains("sp-root-minimized");
-        if (!isMinimized) {
-          hydrateStats(header);
-        }
-      } else {
-        // If minimized, check effective vote for logo update
-        fetchEffectiveVote(voteContext).then(ev => {
-          updateLogoVisual(root, header, ev || 0, null);
-        });
-      }
-    },
+    // onMinimize Removed (v0.36.34)
     onAutoMin: async () => {
       const current = (await getState("autoMin", false)) === true;
       const next = !current;
       await setState("autoMin", next);
+
+      // Auto Min now applies minimized state immediately implies it stays minimized?
+      // Or does it toggle the "Minimized" class?
+      // Logic from old onMinimize: applyMinimizedState(root, nowMin);
+      // But onAutoMin logic was: applyMinimizedState(root, next);
+      // Wait, Auto Min should TOGGLE the PREFERENCE.
+      // Does it toggle the STATE?
+      // Step 685: onAutoMin: async () => { ... setState("autoMin", next); applyMinimizedState(root, next); }
+      // So yes, clicking Auto Min toggles it immediately.
       applyMinimizedState(root, next);
     },
     onSettings: () => {
       openSettingsModal(root);
+    },
+    onReports: () => {
+      window.open("https://vod.fan/shadowpulse/website/reports/index.php", "_blank");
     }
   });
 
@@ -294,7 +297,7 @@ async function hydrateStats(header) {
     // If hydrateStats itself throws an unexpected error (not likely for this function), 
     // display an error state.
     if (header._spRefs && header._spRefs.statsPrice) {
-      header._spRefs.statsPrice.textContent = "Err";
+      header._spRefs.statsPrice.textContent = "...";
       refs.statsZone.classList.remove("sp-zone-loading");
     }
   }
@@ -331,10 +334,16 @@ async function hydrateFullContext(root, header, voteContext) {
 
     // Scrape Metadata
     const meta = {};
-    if (cat === 'topic' || cat === 'post') {
-      const fullTitle = document.title || "";
+    if (cat === 'topic' || cat === 'post' || cat === 'profile') {
+      let fullTitle = document.title || "";
       // Remove " - Bitcoin Forum" suffix if present
-      meta.title = fullTitle.replace(" - Bitcoin Forum", "").trim();
+      fullTitle = fullTitle.replace(" - Bitcoin Forum", "").trim();
+
+      if (cat === 'profile') {
+        // Remove "View the profile of " prefix
+        fullTitle = fullTitle.replace("View the profile of ", "").trim();
+      }
+      meta.title = fullTitle;
     }
 
     const fullData = await fetchPageContext(cat, tid, meta);
@@ -399,7 +408,32 @@ async function hydrateFullContext(root, header, voteContext) {
         target_label: summary.label
       };
       renderVoteSummary(refs.votesSummary, uiSummary, ctx);
-      if (refs.votesZone) refs.votesZone.classList.remove("sp-zone-loading");
+      if (refs.votesZone) {
+        refs.votesZone.classList.remove("sp-zone-loading");
+
+        // Check Helper Setting and toggle Watermark
+        getState("voteHelper", true).then(enabled => {
+          const wm = refs.votesZone.querySelector(".sp-vote-watermark");
+          if (wm) {
+            wm.style.display = enabled ? "block" : "none";
+          } else if (enabled) {
+            // If enabled but missing (e.g. initially hidden or failed create), create it?
+            // Usually createVotesZone (Step 652) handles creation. 
+            // If it wasn't created because setting was off, specific logic might be needed.
+            // But wait, Step 652 logic was: IF enabled, create.
+            // So if it was OFF, wm is null.
+            // If I turn it ON, I need to CREATE it dynamically here?
+            // Or easier: Always create it in createVotesZone but HIDDEN?
+            // No, simpler to just re-create it here if missing.
+            const noun = (ctx.kind === 'post') ? 'Post' : 'Topic';
+            // Lazy import createEl? Or assume it's available? 
+            // createEl is imported in main.js.
+            const watermark = createEl("div", ["sp-vote-watermark"]);
+            watermark.textContent = noun.toUpperCase();
+            refs.votesZone.appendChild(watermark);
+          }
+        });
+      }
     }
 
     // Logo
@@ -437,9 +471,22 @@ async function hydrateFullContext(root, header, voteContext) {
     if (document.getElementById(SP_CONFIG.ROOT_ID)) return;
 
     const theme = await getState("theme", SP_CONFIG.DEFAULT_THEME);
-    const root = buildRoot(theme);
-    const voteContext = getVotingContext();
+    const voteContext = getVotingContext(); // Sync parse
+
+    // v0.36.30 FIX: Fetch AutoMin EARLY to prevent flash
+    // v0.36.35 FIX: Fetch Position EARLY to prevent flash
+    const [autoMin, savedLeft] = await Promise.all([
+      getState("autoMin", false),
+      getState("toolbarLeft", null)
+    ]);
+    const isAutoMin = autoMin === true;
+
+    // 1. Root & Base
+    const root = buildRoot("light", isAutoMin, savedLeft);
     const header = buildToolbar(root, voteContext);
+
+    // No longer need to apply it late
+    // if (autoMin) applyMinimizedState(root, true);
 
     updateLogoVisual(root, header, 0);
     const { panel: searchPanel, input: searchInput } = attachSearch(root, header);
@@ -451,16 +498,13 @@ async function hydrateFullContext(root, header, voteContext) {
     // This prevents 500 Errors on the backend if the SP assumes existence.
     try { await bootstrapMember(memberUuid); } catch (e) { }
 
-    spLog("ShadowPulse build", SP_CONFIG.VERSION);
-    spLog("ShadowPulse member UUID", memberUuid);
+    spLog("ShadowPulse build " + SP_CONFIG.VERSION + " initialized");
+    // spLog("ShadowPulse member UUID", memberUuid);
     // trackPageView(memberUuid); // Removed: Handled in SP now.
 
-    // Saved Position
-    const savedLeft = await getState("toolbarLeft", null);
-    if (typeof savedLeft === "number") {
-      root.style.left = savedLeft + "px";
-      root.style.transform = "none";
-    }
+    // Saved Position (Applied in buildRoot now)
+    // const savedLeft = await getState("toolbarLeft", null);
+    // if (typeof savedLeft === "number") { ... }
 
     // Events
     const logoCircle = header.querySelector(".sp-logo-circle");
@@ -487,9 +531,9 @@ async function hydrateFullContext(root, header, voteContext) {
       }, { capture: true });
     }
 
-    // Auto Min
-    const autoMin = (await getState("autoMin", false)) === true;
-    if (autoMin) applyMinimizedState(root, true);
+    // Auto Min (Moved to start of init)
+    // const autoMin = (await getState("autoMin", false)) === true;
+    // if (autoMin) applyMinimizedState(root, true);
 
     // ... imports
     // ... imports removed
@@ -502,13 +546,22 @@ async function hydrateFullContext(root, header, voteContext) {
     // injectPostVotes(); // REDACTED: User prefers Toolbar-only design.
     await hydrateFullContext(root, header, voteContext); // Main Context
 
-    spLog("ShadowPulse initialized.");
+    // spLog("ShadowPulse initialized."); // Consolidated above
 
     // === HASH/URL CHANGE LISTENER ===
     // Detects when user clicks "#msg123" to switch context from Topic -> Post
     window.addEventListener("hashchange", async () => {
       const newCtx = getVotingContext();
       await hydrateFullContext(root, header, newCtx);
+    });
+
+    // === SETTINGS CLOSED LISTENER ===
+    window.addEventListener("sp-settings-closed", async () => {
+      const currentCtx = getVotingContext();
+      // Re-hydrate everything (Ads, Stats, Votes) to catch settings changes
+      hydrateAds(header);
+      hydrateStats(header);
+      await hydrateFullContext(root, header, currentCtx);
     });
 
     // === PERIODIC REFRESH ===

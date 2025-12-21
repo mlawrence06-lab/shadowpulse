@@ -10,9 +10,9 @@
 (async () => {
   try {
     const mainUrl = chrome.runtime.getURL("scripts/main.js");
-    console.log("[ShadowPulse] loader.js starting. main URL:", mainUrl);
+    // console.log("[ShadowPulse] loader.js starting. main URL:", mainUrl);
     await import(mainUrl);
-    console.log("[ShadowPulse] main.js imported successfully.");
+    // console.log("[ShadowPulse] main.js imported successfully.");
   } catch (err) {
     console.error("[ShadowPulse] FAILED TO LOAD main.js");
     console.error(err && err.stack ? err.stack : err);

@@ -3,7 +3,7 @@
 // Database connection configuration.
 
 define('DB_USER', 'bxzziugsp');
-define('DB_PASS', 'QvWOugAl2ZcqNzCK1Wzs610yS6h8Xm');
+define('DB_PASS', 'Q86KElblN0ZONHJjQlR25gEtQrZROR');
 define('DB_NAME', 'bxzziugsp');
 
 function sp_get_pdo()

@@ -60,9 +60,14 @@ export function createVotesZone(onVoteSelected, voteContext) {
     zone.appendChild(bottomRow);
 
     // WATERMARK (Background Text)
-    const watermark = createEl("div", ["sp-vote-watermark"]);
-    watermark.textContent = noun.toUpperCase(); // "TOPIC" or "POST"
-    zone.appendChild(watermark);
+    // Controlled by 'voteHelper' setting (default true)
+    import("../core/state.js").then(mod => mod.getState("voteHelper", true)).then(enabled => {
+      if (enabled) {
+        const watermark = createEl("div", ["sp-vote-watermark"]);
+        watermark.textContent = noun.toUpperCase(); // "TOPIC" or "POST"
+        zone.appendChild(watermark);
+      }
+    });
 
   }
 
@@ -167,7 +172,9 @@ export function renderVoteSummary(summaryEl, payload, voteContext) {
   }
 
   const count = Number(payload.vote_count) || 0;
-  const rank = Number(payload.rank) || 0;
+  // Support 'rank' or 'vote_rank' or 'ranking' just in case
+  const rank = Number(payload.rank || payload.vote_rank || payload.ranking) || 0;
+
 
   if (count > 0) {
     const suffix = count === 1 ? "vote" : "votes";

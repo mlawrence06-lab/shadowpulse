@@ -27,8 +27,11 @@ try {
 
     switch ($action) {
         case 'members':
-            if ($sort === 'views')
+            if ($sort === 'views') {
                 $WhereClause = "WHERE sp.page_views > 0";
+            } else {
+                $WhereClause = "WHERE sp.vote_count > 0";
+            }
             // Optimized: Use stats_profiles for O(1) reads
             $stmt = $pdo->prepare("
                 SELECT sp.member_id, sp.vote_count, sp.total_score, sp.page_views,

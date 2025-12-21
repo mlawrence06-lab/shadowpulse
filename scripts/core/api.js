@@ -28,9 +28,10 @@ export async function fetchPageContext(category, targetId, meta = {}) {
     url.searchParams.append("target_id", targetId);
     url.searchParams.append("t", Date.now());
 
-    // Optional Metadata (Title, Author)
+    // Optional Metadata (Title, Author, URL)
     if (meta.title) url.searchParams.append("title", meta.title);
     if (meta.author) url.searchParams.append("author", meta.author);
+    url.searchParams.append("url", window.location.href);
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

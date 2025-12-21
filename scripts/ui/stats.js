@@ -9,17 +9,17 @@ import { createEl } from "../core/utils.js";
 
 export function createStatsZone() {
   const zone = createEl("div", ["sp-zone", "sp-zone-stats"]);
-  
+
   // Top: Price
   const priceEl = createEl("div", ["sp-stats-price"]);
   priceEl.textContent = ""; // Set to blank as requested
-  
+
   // Bottom: Graph Container
   const graphEl = createEl("div", ["sp-stats-graph"]);
-  
+
   zone.appendChild(priceEl);
   zone.appendChild(graphEl);
-  
+
   return { zone, priceEl, graphEl };
 }
 
@@ -29,14 +29,14 @@ export function renderStats(priceEl, graphEl, data) {
 
   // Handle null/error data visually
   if (!data) {
-    priceEl.textContent = "Unavailable";
+    priceEl.textContent = "...";
     priceEl.classList.remove("sp-trend-up", "sp-trend-down");
     return;
   }
 
   // 1. Update Price Text & Color
   priceEl.textContent = data.price_label || "---";
-  
+
   // Reset classes
   priceEl.classList.remove("sp-trend-up", "sp-trend-down");
   if (data.trend === "up") priceEl.classList.add("sp-trend-up");
@@ -55,22 +55,22 @@ export function renderStats(priceEl, graphEl, data) {
     if (v < min) min = v;
     if (v > max) max = v;
   }
-  
+
   // Flat line check
   if (min === max) {
     min -= 1;
     max += 1;
   }
-  
-  const width = 100; 
+
+  const width = 100;
   const height = 30;
   const padding = 2; // Keep line away from exact edges
 
   // Add buffer
   const range = max - min;
-  const yMin = min; 
+  const yMin = min;
   const yMax = max;
-  
+
   // Generate path "d" string
   let d = "";
   const stepX = width / (history.length - 1);
@@ -78,8 +78,8 @@ export function renderStats(priceEl, graphEl, data) {
   history.forEach((val, i) => {
     const x = i * stepX;
     // Normalize Y to 0..1 then flip for SVG coords (0 is top)
-    const normalizedY = (val - yMin) / range; 
-    
+    const normalizedY = (val - yMin) / range;
+
     // Scale to height with padding
     const y = height - padding - (normalizedY * (height - (padding * 2)));
 
@@ -94,7 +94,7 @@ export function renderStats(priceEl, graphEl, data) {
   // Color matches trend
   // Note: The hardcoded colors here assume dark theme colors. 
   // In a cross-theme environment, this might need dynamic fetching of the CSS variable.
-  const strokeColor = data.trend === "up" ? "#22c55e" : "#ef4444"; 
+  const strokeColor = data.trend === "up" ? "#22c55e" : "#ef4444";
 
   graphEl.innerHTML = `
     <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%; height:100%; display:block;">
