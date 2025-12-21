@@ -44,7 +44,7 @@ if (!isset($pageSubtitle)) {
                     <div class="brand-name">
                         ShadowPulse
                     </div>
-                    <div class="brand-tagline">Tagline Needed!</div>
+                    <div class="brand-tagline">TAGLINE CONTEST!</div>
                 </div>
             </a>
 
