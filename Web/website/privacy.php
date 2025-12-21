@@ -33,6 +33,19 @@ require_once __DIR__ . '/header.php';
             identifier. Your activity remains completely anonymous.
         </p>
 
+        <h4 style="color: var(--sp-text-primary); font-size: 1.1rem; margin-bottom: 10px; margin-top: 15px;">Custom
+            Privacy</h4>
+        <p style="margin-bottom: 15px; line-height: 1.6;">
+            By default, your activity is reported under a generic alias (e.g., 'Member 421') derived seamlessly from
+            your internal sequential ID (which is solely used for database indexing and has <strong>no relation</strong>
+            to your Bitcointalk Forum ID).
+        </p>
+        <p style="margin-bottom: 15px; line-height: 1.6;">
+            You have the option to set a <strong>Custom Display Name</strong> in the extension settings at any time.
+            This allows you to obfuscate your internal Member ID and personalize your experience while maintaining full
+            anonymity.
+        </p>
+
         <h3 style="color: var(--sp-text-primary); font-size: 1.2rem; margin-bottom: 10px;">Page Interaction</h3>
         <p style="margin-bottom: 15px; line-height: 1.6;">
             <strong>We do not read the DOM (Document Object Model) of the pages you visit for content
@@ -94,7 +107,16 @@ require_once __DIR__ . '/header.php';
             contacting the developer via PM on the forum or deleting the extension (which discards your UUID key).
         </p>
     </section>
-    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">Privacy Policy v2</div>
+    <section style="margin-bottom: 40px;">
+        <h2 style="color: var(--sp-text-primary); margin-bottom: 15px;">Data Retention</h2>
+        <p style="margin-bottom: 15px; line-height: 1.6;">
+            To maintain the accuracy and relevancy of our rating system, the system automatically removes all votes
+            associated with any UUID that has not been active for 90 days. This keeps the ecosystem fresh and ensures
+            rankings reflect the current active user base.
+        </p>
+    </section>
+
+    <div style="text-align: center; margin-top: 50px; color: #666; font-size: 0.8em;">Privacy Policy v3</div>
 </div>
 
 <?php require_once __DIR__ . '/footer.php'; ?>
