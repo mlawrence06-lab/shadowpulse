@@ -123,13 +123,15 @@ body {
 .brand-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
+  justify-content: center;
 }
 
 .brand-name {
   font-weight: 700;
   letter-spacing: -0.01em;
   font-size: 2.0rem;
+  line-height: 0.9;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -145,7 +147,7 @@ body {
   letter-spacing: 0.15em;
   color: var(--text-muted);
   opacity: 0.8;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 /* Navigation */
