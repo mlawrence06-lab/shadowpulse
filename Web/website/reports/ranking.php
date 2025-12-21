@@ -92,7 +92,7 @@ include __DIR__ . '/../header.php';
 </section>
 
 <div style="text-align: center; font-size: 0.8em; color: #666; margin-top: 20px; margin-bottom: 20px;">Ranking Report
-    v1.17</div>
+    v18</div>
 
 <script>
     ej.base.registerLicense('Ngo9BigBOggjHTQxAR8/V1JFaF5cXGRCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWH1fc3RWRmlfWEF1WEtWYEg=');

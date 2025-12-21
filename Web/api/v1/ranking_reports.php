@@ -51,17 +51,24 @@ try {
             m.member_id,
             COALESCE(NULLIF(m.custom_name, ''), CONCAT('Member ', m.member_id)) as display_name,
             COALESCE(ms.page_views, 0) as page_views,
-            COALESCE(ms.topic_votes, 0) as topic_votes,
-            COALESCE(ms.post_votes, 0) as post_votes,
-            (COALESCE(ms.topic_votes, 0) + COALESCE(ms.post_votes, 0)) as total_votes,
+            COALESCE(v.topic_votes, 0) as topic_votes,
+            COALESCE(v.post_votes, 0) as post_votes,
+            (COALESCE(v.topic_votes, 0) + COALESCE(v.post_votes, 0)) as total_votes,
             COALESCE(ms.searches_made, 0) as searches
         FROM members m
         LEFT JOIN member_stats ms ON m.member_id = ms.member_id
+        LEFT JOIN (
+            SELECT member_id, 
+                   COUNT(CASE WHEN vote_category = 'topic' THEN 1 END) as topic_votes,
+                   COUNT(CASE WHEN vote_category = 'post' THEN 1 END) as post_votes
+            FROM votes
+            GROUP BY member_id
+        ) v ON m.member_id = v.member_id
         WHERE m.member_id > 0
           AND (
             COALESCE(ms.page_views, 0) > 0 OR 
-            COALESCE(ms.topic_votes, 0) > 0 OR 
-            COALESCE(ms.post_votes, 0) > 0 OR 
+            COALESCE(v.topic_votes, 0) > 0 OR 
+            COALESCE(v.post_votes, 0) > 0 OR 
             COALESCE(ms.searches_made, 0) > 0
           )
         ORDER BY $orderBy
