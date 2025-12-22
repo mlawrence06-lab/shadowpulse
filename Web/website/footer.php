@@ -6,6 +6,8 @@
         &copy; <span id="year"></span>
     </div>
     <div class="footer-right">
+        <a href="/shadowpulse/website/contact.php"
+            style="color: inherit; text-decoration: none; margin-right: 15px; font-size: 0.9em;">Contact Us</a>
         <a href="/shadowpulse/website/privacy.php"
             style="color: inherit; text-decoration: none; margin-right: 15px; font-size: 0.9em;">Privacy Policy</a>
         <span class="footer-pill">Bitcointalk analytics layer</span>

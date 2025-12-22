@@ -2,57 +2,103 @@
 
 /**
  * ShadowPulse - ui/ads.js
- * Revive Adserver-based ads zone using an iframe tag.
- *
- * We avoid injecting external <script> tags (blocked by CSP on some hosts)
- * and instead render a 300x50 Revive iframe directly inside the ads zone.
+ * Robust Ad Loading: Cache First -> Network -> Update Cache.
+ * Fallback to Default on failure.
  */
 
 import { createEl } from "../core/utils.js";
+import { getState, setState } from "../core/state.js";
 
-// Revive iframe configuration
-const REVIVE_IFRAME_BASE = "https://vod.fan/adserver/www/delivery/afr.php";
-const REVIVE_ZONE_ID = 2;
-const REVIVE_IFRAME_WIDTH = 150;
-const REVIVE_IFRAME_HEIGHT = 50;
+// Revive Adserver config
+// 'avw.php' usually returns an Image Redirect (Blob/Data).
+const REVIVE_DIRECT_IMG = "https://vod.fan/adserver/www/delivery/avw.php?zoneid=2&cb=";
+const FALLBACK_TTL = 6 * 60 * 60 * 1000; // 6 hours
 
 /**
- * Creates the ads zone for the toolbar.
- * Returns a container with a single iframe pointing at the Revive zone.
- *
- * The return shape still includes link/img placeholders so existing
- * call sites that destructure { zone, link, img } keep working.
+ * Creates the ads zone container.
  */
 export function createAdsZone() {
   const zone = createEl("div", ["sp-zone", "sp-zone-ads"]);
+  zone.style.width = "150px";
+  zone.style.height = "50px";
+  zone.style.position = "relative";
+  zone.style.backgroundColor = "#1f2937"; // Dark Placeholder
+  zone.style.overflow = "hidden";
 
-  // cache‑buster to avoid overly-aggressive intermediaries
-  const cacheBuster = Math.floor(Math.random() * 1e16);
+  // Img Element
+  const img = createEl("img", ["sp-ads-img"]);
+  img.style.width = "150px";
+  img.style.height = "50px";
+  img.style.objectFit = "cover";
+  img.style.display = "none"; // Hidden until loaded
 
-  const iframeAttrs = {
-    src: `${REVIVE_IFRAME_BASE}?zoneid=${REVIVE_ZONE_ID}&cb=${cacheBuster}`,
-    width: String(150),
-    height: String(REVIVE_IFRAME_HEIGHT),
-    frameborder: "0",
-    scrolling: "no",
-    allow: "autoplay",
-    title: "ShadowPulse Ad",
-  };
-
-  const iframe = createEl("iframe", ["sp-ads-iframe"], iframeAttrs);
-  zone.appendChild(iframe);
-
-  // Keep API compatible with previous image‑based implementation
-  const link = null;
-  const img = null;
-
-  return { zone, link, img };
+  zone.appendChild(img);
+  return { zone, link: null, img }; // Return img for loader
 }
 
 /**
- * No-op for compatibility: main.js still calls loadBannerAd(...),
- * but Revive handles loading/rotation inside the iframe on its own.
+ * Loads the banner ad.
+ * 1. Checks Cache (displays immediately if valid).
+ * 2. Fetches Fresh (updates display + cache on success).
+ * 3. Fallback to Text if both fail.
  */
 export async function loadBannerAd(zone, img, link) {
-  return;
+  try {
+    const now = Date.now();
+
+    // 1. Try to Load Cached Ad FIRST (Instant Visual)
+    const cached = await getState("cached_ad_data", null); // { data: base64, time: ts }
+    if (cached && (now - cached.time < FALLBACK_TTL)) {
+      img.src = cached.data;
+      img.style.display = "block";
+    }
+
+    // 2. Network Fetch (Fresh)
+    const cb = Math.floor(Math.random() * 1e16);
+    const url = `${REVIVE_DIRECT_IMG}${cb}&n=a34f32`;
+
+    // Create a temp loader to verify network success
+    const loader = new Image();
+    loader.onload = () => {
+      // Success!
+      img.src = url;
+      img.style.display = "block";
+
+      // Try to cache it (Canvas Draw)
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 150;
+        canvas.height = 50;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(loader, 0, 0, 150, 50);
+        const dataURL = canvas.toDataURL("image/png");
+        setState("cached_ad_data", { data: dataURL, time: now });
+      } catch (e) {
+        // CORS might block this (Tainted Canvas). 
+        // Expected if server doesn't send Access-Control-Allow-Origin.
+      }
+    };
+
+    loader.onerror = () => {
+      // Network Failed or Blocked.
+      console.warn("[ShadowPulse] Ad Network Failed/Blocked.");
+
+      // If we already set the cached image, do nothing (keep showing it).
+      // If no cache (img hidden/empty), show 'Default' text.
+      if (!img.src || img.style.display === "none") {
+        const fallbackDiv = createEl("div");
+        fallbackDiv.textContent = "ShadowPulse";
+        fallbackDiv.style.color = "#4b5563";
+        fallbackDiv.style.lineHeight = "50px";
+        fallbackDiv.style.textAlign = "center";
+        fallbackDiv.style.fontWeight = "bold";
+        zone.innerHTML = ""; // Clear img
+        zone.appendChild(fallbackDiv);
+      }
+    };
+
+    loader.src = url;
+  } catch (err) {
+    console.error("[ShadowPulse] loadBannerAd error", err);
+  }
 }

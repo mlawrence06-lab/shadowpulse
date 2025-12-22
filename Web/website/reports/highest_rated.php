@@ -1,7 +1,7 @@
 <?php
 // top_charts.php
-$pageTitle = "Top Charts";
-$pageSubtitle = "Top Ranked Content & Members";
+$pageTitle = "Highest Rated";
+$pageSubtitle = "Highest rated Profiles, Boards, Topics, and Posts";
 $activePage = 'reports';
 include __DIR__ . '/../header.php';
 ?>
@@ -88,7 +88,7 @@ include __DIR__ . '/../header.php';
 
 <section class="content">
     <div class="content-header" style="text-align: center; margin-bottom: 20px;">
-        <div class="content-title">Top Charts</div>
+        <div class="content-title">Highest Rated</div>
         <div class="content-subtitle">Global Rankings</div>
     </div>
 
@@ -222,5 +222,5 @@ include __DIR__ . '/../header.php';
     });
 </script>
 
-<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Top Charts Report v19</div>
+<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Top Charts Report v20</div>
 <?php include __DIR__ . '/../footer.php'; ?>

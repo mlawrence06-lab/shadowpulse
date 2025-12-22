@@ -482,7 +482,7 @@ async function hydrateFullContext(root, header, voteContext) {
     const isAutoMin = autoMin === true;
 
     // 1. Root & Base
-    const root = buildRoot("light", isAutoMin, savedLeft);
+    const root = buildRoot(theme, isAutoMin, savedLeft);
     const header = buildToolbar(root, voteContext);
 
     // No longer need to apply it late

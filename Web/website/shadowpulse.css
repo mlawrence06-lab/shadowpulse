@@ -154,7 +154,7 @@ body {
 
 .site-nav {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   align-items: center;
   font-size: 0.82rem;
 }
@@ -162,12 +162,13 @@ body {
 .site-nav .nav-link {
   color: var(--text-muted);
   text-decoration: none;
-  padding: 6px 10px;
+  padding: 6px 6px;
   border-radius: 999px;
   border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  white-space: nowrap;
   transition:
     color 0.18s ease,
     background-color 0.18s ease,

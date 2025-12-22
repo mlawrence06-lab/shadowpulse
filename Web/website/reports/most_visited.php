@@ -1,7 +1,7 @@
 <?php
 // most_visited.php
 $pageTitle = "Most Visited";
-$pageSubtitle = "Popular Content by Page Views";
+$pageSubtitle = "Most visited Bitcointalk pages in the last 90 days";
 $activePage = 'reports';
 include __DIR__ . '/../header.php';
 ?>
@@ -86,7 +86,7 @@ include __DIR__ . '/../header.php';
 <section class="content">
     <div class="content-header" style="text-align: center; margin-bottom: 20px;">
         <div class="content-title">Most Visited</div>
-        <div class="content-subtitle">Content with the highest number of page views within ShadowPulse</div>
+        <div class="content-subtitle">Most visited Bitcointalk pages in the last 90 days</div>
     </div>
 
     <div class="content-body">
@@ -151,8 +151,8 @@ include __DIR__ . '/../header.php';
             valField: 'views',
             format: 'N0',
             template: (props) => {
-                let displayLabel = props.label 
-                    ? props.label 
+                let displayLabel = props.label
+                    ? props.label
                     : (props.author_name ? `Post ${props.id} (${props.author_name})` : `Post ${props.id}`);
 
                 if (props.topic_id && props.topic_id > 0) {
@@ -218,5 +218,5 @@ include __DIR__ . '/../header.php';
     });
 </script>
 
-<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Most Visited Report v3.1</div>
+<div style="font-size: 10px; color: #666; text-align: center; margin-top: 20px;">Most Visited Report v4</div>
 <?php include __DIR__ . '/../footer.php'; ?>

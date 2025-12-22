@@ -19,10 +19,10 @@ include __DIR__ . '/../header.php';
         <ul class="result-list">
             <li class="result-item">
                 <div class="result-title">
-                    <a href="ranking.php">Ranking Reports</a>
+                    <a href="most_active_users.php">Most Active Users</a>
                 </div>
                 <div class="result-meta">
-                    Top ranked members by views, searches, votes, and installs.
+                    Top ranked members by views, searches, and votes.
                 </div>
                 <div class="result-snippet">
                     Visual ranking reports using charts and grids.
@@ -31,10 +31,10 @@ include __DIR__ . '/../header.php';
 
             <li class="result-item">
                 <div class="result-title">
-                    <a href="top_charts.php">Top Charts</a>
+                    <a href="highest_rated.php">Highest Rated</a>
                 </div>
                 <div class="result-meta">
-                    Highest rated Members, Boards, Topics, and Posts.
+                    Highest rated Profiles, Boards, Topics, and Posts on Bitcointalk.
                 </div>
                 <div class="result-snippet">
                     Leaderboards sorted by Average Score (Votes).
@@ -43,10 +43,10 @@ include __DIR__ . '/../header.php';
 
             <li class="result-item">
                 <div class="result-title">
-                    <a href="most_visited.php">Most Visited Content</a>
+                    <a href="most_visited.php">Most Visited</a>
                 </div>
                 <div class="result-meta">
-                    Top ranked Members, Boards, Topics, and Posts by Page Views.
+                    Most visited Bitcointalk pages in the last 90 days.
                 </div>
                 <div class="result-snippet">
                     Highlight trending and historically popular content sorted by total visits.

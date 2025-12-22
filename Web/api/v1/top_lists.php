@@ -20,7 +20,7 @@ try {
     $OrderBy = "";
     $WhereClause = "";
     if ($sort === 'views') {
-        $OrderBy = "ORDER BY page_views DESC";
+        $OrderBy = "ORDER BY view_count DESC";
     } else {
         $OrderBy = "ORDER BY (total_score / NULLIF(vote_count, 0)) DESC";
     }
@@ -28,13 +28,13 @@ try {
     switch ($action) {
         case 'members':
             if ($sort === 'views') {
-                $WhereClause = "WHERE sp.page_views > 0";
+                $WhereClause = "WHERE sp.view_count > 0";
             } else {
                 $WhereClause = "WHERE sp.vote_count > 0";
             }
             // Optimized: Use stats_profiles for O(1) reads
             $stmt = $pdo->prepare("
-                SELECT sp.member_id, sp.vote_count, sp.total_score, sp.page_views,
+                SELECT sp.member_id, sp.vote_count, sp.total_score, sp.view_count,
                        (SELECT author_name FROM content_metadata WHERE author_id = sp.member_id LIMIT 1) as author_name
                 FROM stats_profiles sp
                 $WhereClause
@@ -56,21 +56,23 @@ try {
                     'label' => (string) $name,
                     'count' => $count,
                     'score' => round($avg, 2),
-                    'views' => (int) ($r['page_views'] ?? 0)
+                    'views' => (int) ($r['view_count'] ?? 0)
                 ];
             }
             break;
 
         case 'boards':
-            // Boards do not track page views. Return empty if sorting by views.
-            // Boards do not track page views. Return empty if sorting by views.
-            // FIXED: Boards DO track views via SP. Allowed.
+            if ($sort === 'views') {
+                $WhereClause = "WHERE sb.view_count > 0";
+            } else {
+                $WhereClause = "WHERE sb.vote_count > 0";
+            }
 
             $stmt = $pdo->prepare("
-                SELECT sb.board_id, sb.vote_count, sb.total_score, b.board_name, sb.page_views
+                SELECT sb.board_id, sb.vote_count, sb.total_score, b.board_name, sb.view_count
                 FROM stats_boards sb
                 LEFT JOIN boards b ON sb.board_id = b.board_id
-                WHERE sb.page_views > 0
+                $WhereClause
                 $OrderBy
                 LIMIT ?
             ");
@@ -90,16 +92,19 @@ try {
                     'label' => $label,
                     'count' => $count,
                     'score' => round($avg, 2),
-                    'views' => (int) ($r['page_views'] ?? 0)
+                    'views' => (int) ($r['view_count'] ?? 0)
                 ];
             }
             break;
 
         case 'topics':
-            if ($sort === 'views')
-                $WhereClause = "WHERE st.page_views > 0";
+            if ($sort === 'views') {
+                $WhereClause = "WHERE st.view_count > 0";
+            } else {
+                $WhereClause = "WHERE st.vote_count > 0";
+            }
             $stmt = $pdo->prepare("
-                SELECT st.topic_id, st.vote_count, st.total_score, st.page_views, ti.topic_title
+                SELECT st.topic_id, st.vote_count, st.total_score, st.view_count, ti.topic_title
                 FROM stats_topics st
                 LEFT JOIN topics_info ti ON st.topic_id = ti.topic_id
                 $WhereClause
@@ -130,16 +135,19 @@ try {
                     'label' => $title,
                     'count' => $count,
                     'score' => round($avg, 2),
-                    'views' => (int) ($r['page_views'] ?? 0)
+                    'views' => (int) ($r['view_count'] ?? 0)
                 ];
             }
             break;
 
         case 'posts':
-            if ($sort === 'views')
-                $WhereClause = "WHERE sp.page_views > 0";
+            if ($sort === 'views') {
+                $WhereClause = "WHERE sp.view_count > 0";
+            } else {
+                $WhereClause = "WHERE sp.vote_count > 0";
+            }
             $stmt = $pdo->prepare("
-                SELECT sp.post_id, sp.vote_count, sp.total_score, sp.page_views,
+                SELECT sp.post_id, sp.vote_count, sp.total_score, sp.view_count,
                        cm.author_id, cm.author_name, cm.topic_id, cm.post_subject,
                        ti.topic_title
                 FROM stats_posts sp
@@ -205,7 +213,7 @@ try {
                     'author_name' => $authorName,
                     'count' => $count,
                     'score' => round($avg, 2),
-                    'views' => (int) ($r['page_views'] ?? 0)
+                    'views' => (int) ($r['view_count'] ?? 0)
                 ];
             }
             break;

@@ -49,7 +49,7 @@ if (!isset($pageSubtitle)) {
             </a>
 
             <?php if (strpos($_SERVER['SCRIPT_NAME'], '/reports/') !== false): ?>
-                <div class="header-banner" style="margin: 0 20px;">
+                <div class="header-banner" style="margin: 0 5px;">
                     <!-- Revive Adserver Asynchronous JS Tag - Generated with Revive Adserver v6.0.4 -->
                     <ins data-revive-zoneid="3" data-revive-id="d25be6bbfc14f64ec3435931485e35e2"></ins>
                     <script async src="//vod.fan/adserver/www/delivery/asyncjs.php"></script>
