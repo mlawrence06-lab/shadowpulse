@@ -15,8 +15,7 @@ export const SP_CONFIG = {
   SITE_PATTERN: /(^|\.)bitcointalk\.org$/i,
 
   // APIs
-  ADS_API: "***",
-  ADS_BANNER_IMAGE: "https://vod.fan/adserver/www/delivery/avw.php?zoneid=1",
+  GET_BANNER_AD_API: "https://vod.fan/shadowpulse/api/v1/get_banner_ad.php",
   ADS_BANNER_LINK: "https://vod.fan/shadowpulse/advertise.php",
 
   GET_STATS_API: "https://vod.fan/shadowpulse/api/v1/get_stats.php",

@@ -14,7 +14,7 @@ import { getOrCreateMemberUuid } from "./core/member.js";
 import { getVotingContext } from "./core/pageContext.js";
 
 import { createLogoZone } from "./ui/logo.js";
-import { createAdsZone, loadBannerAd } from "./ui/ads.js";
+import { createPartnersZone, loadPartnerBanner } from "./ui/partners.js";
 import { createStatsZone, renderStats } from "./ui/stats.js";
 import { createVotesZone, setSelected, renderVoteSummary } from "./ui/votes.js";
 import { createControlZone } from "./ui/control.js";
@@ -134,7 +134,7 @@ function buildToolbar(root, voteContext) {
   const logoZone = createLogoZone(() => { }, root);
 
   // 2) ads (HIDDEN by default, made visible in hydrateAds)
-  const { zone: adsZone, link: adsLink, img: adsImg } = createAdsZone();
+  const { zone: adsZone, link: adsLink, img: adsImg } = createPartnersZone();
   adsZone.classList.add("sp-zone-loading");
 
   // 3) stats (HIDDEN by default, made visible in hydrateStats *only if data is present*)
@@ -265,7 +265,7 @@ function attachSearch(root, header) {
 async function hydrateAds(header) {
   try {
     const refs = header._spRefs;
-    await loadBannerAd(refs.adsZone, refs.adsImg, refs.adsLink);
+    await loadPartnerBanner(refs.adsZone, refs.adsImg, refs.adsLink);
     // ASAP: Make Ad zone visible
     if (refs.adsZone) {
       refs.adsZone.classList.remove("sp-zone-loading");
