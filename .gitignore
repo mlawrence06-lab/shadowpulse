@@ -1,4 +1,4 @@
-.agent/ssh/
+.agent/
 .DS_Store
 Thumbs.db
 *.key
