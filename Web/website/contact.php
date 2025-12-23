@@ -3,8 +3,7 @@ $pageTitle = 'Contact Us';
 require_once 'header.php';
 
 // Configuration
-$toEmail = 'mlawrence06@gmail.com';
-$turnstileSecretKey = '0x4AAAAAACICJXMLsALNMsyUH4LOrvmApsw';
+require_once '../config/credentials.php';
 
 $messageSent = false;
 $error = '';
