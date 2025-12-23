@@ -103,6 +103,7 @@
 }
 
 .sp-root.sp-root-minimized .sp-zone-ads,
+.sp-root.sp-root-minimized .sp-zone-partners,
 .sp-root.sp-root-minimized .sp-zone-stats,
 .sp-root.sp-root-minimized .sp-zone-votes,
 .sp-root.sp-root-minimized .sp-zone-control {
@@ -419,9 +420,9 @@ body.sp-dragging {
 
 .sp-votes-summary,
 .sp-text-secondary {
+  font-family: "Consolas", "Monaco", monospace;
   font-size: 11px;
-  opacity: 0.8;
-  opacity: 0.8;
+  opacity: 1;
   font-weight: 700;
   text-align: center;
 }

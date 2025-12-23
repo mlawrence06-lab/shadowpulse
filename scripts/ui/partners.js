@@ -41,75 +41,80 @@ export function createPartnersZone() {
  * 2. Fetches Fresh from Proxy (updates display + cache on success).
  * 3. Fallback to Text if both fail.
  */
+/**
+ * Loads the banner ad (partner image) with retry logic.
+ */
 export async function loadPartnerBanner(zone, img, link) {
-    try {
-        const now = Date.now();
+    // Retry config
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 2000;
 
-        // 1. Try to Load Cached Ad FIRST (Instant Visual)
-        const cached = await getState("cached_partner_data", null); // { data: base64, time: ts }
-        if (cached && (now - cached.time < FALLBACK_TTL)) {
-            img.src = cached.data;
-            img.style.display = "block";
+    const attemptLoad = async (retryCount = 0) => {
+        try {
+            const now = Date.now();
+
+            // 1. Try to Load Cached Ad FIRST (Instant Visual) - Only on first attempt
+            if (retryCount === 0) {
+                const cached = await getState("cached_partner_data", null);
+                if (cached && (now - cached.time < FALLBACK_TTL)) {
+                    img.src = cached.data;
+                    img.style.display = "block";
+                }
+            }
+
+            // 2. Network Fetch (Fresh via Proxy)
+            const cb = Math.floor(Math.random() * 1e16);
+            const baseUrl = SP_CONFIG.GET_BANNER_AD_API || "https://vod.fan/shadowpulse/api/v1/get_banner_ad.php";
+            const separator = baseUrl.includes("?") ? "&" : "?";
+            const url = `${baseUrl}${separator}zoneid=2&cb=${cb}`;
+
+            const loader = new Image();
+
+            loader.onload = () => {
+                img.src = url;
+                img.style.display = "block";
+
+                // Cache success
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 150;
+                    canvas.height = 50;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(loader, 0, 0, 150, 50);
+                    const dataURL = canvas.toDataURL("image/png");
+                    setState("cached_partner_data", { data: dataURL, time: now });
+                } catch (e) {
+                    // CORS/Taint expected
+                }
+            };
+
+            loader.onerror = () => {
+                if (retryCount < MAX_RETRIES) {
+                    // Debug only - don't scare user
+                    console.debug(`[ShadowPulse] Ad Network Failed. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
+                    setTimeout(() => attemptLoad(retryCount + 1), RETRY_DELAY_MS * (retryCount + 1)); // Exponential-ish backoff
+                } else {
+                    console.warn("[ShadowPulse] Ad Network Blocked/Failed after retries.");
+                    // Fallback UI
+                    if (!img.src || img.style.display === "none") {
+                        const fallbackDiv = createEl("div");
+                        fallbackDiv.textContent = "ShadowPulse";
+                        fallbackDiv.style.color = "#4b5563";
+                        fallbackDiv.style.lineHeight = "50px";
+                        fallbackDiv.style.textAlign = "center";
+                        fallbackDiv.style.fontWeight = "bold";
+                        zone.innerHTML = "";
+                        zone.appendChild(fallbackDiv);
+                    }
+                }
+            };
+
+            loader.src = url;
+
+        } catch (err) {
+            console.error("[ShadowPulse] loadPartnerBanner error", err);
         }
+    };
 
-        // 2. Network Fetch (Fresh via Proxy)
-        // SP_CONFIG.GET_BANNER_AD_API should be "https://vod.fan/shadowpulse/api/v1/get_banner_ad.php?zoneid=2"
-        // We add a random cache buster just in case local cache is stubborn.
-        const cb = Math.floor(Math.random() * 1e16);
-        const baseUrl = SP_CONFIG.GET_BANNER_AD_API || "https://vod.fan/shadowpulse/api/v1/get_banner_ad.php";
-
-        // Construct URL (handle if ? exists or not)
-        const separator = baseUrl.includes("?") ? "&" : "?";
-        // Default to zoneid 2 if not in config URL, but usually config has it or we append it?
-        // Let's assume URL in config might be base. Let's force zoneid=2 if missing? 
-        // Actually, in `ads.js` it was hardcoded `zoneid=2`. Let's allow config to define it, 
-        // or append it here.
-        // For safety, let's append params.
-        const url = `${baseUrl}${separator}zoneid=2&cb=${cb}`;
-
-        // Create a temp loader to verify network success
-        const loader = new Image();
-        loader.onload = () => {
-            // Success!
-            img.src = url;
-            img.style.display = "block";
-
-            // Try to cache it (Canvas Draw)
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = 150;
-                canvas.height = 50;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(loader, 0, 0, 150, 50);
-                const dataURL = canvas.toDataURL("image/png");
-                setState("cached_partner_data", { data: dataURL, time: now });
-            } catch (e) {
-                // CORS might block this (Tainted Canvas). 
-                // Expected if server doesn't send Access-Control-Allow-Origin.
-                // Our PHP proxy sets CORS headers so this should actually work now!
-            }
-        };
-
-        loader.onerror = () => {
-            // Network Failed or Blocked.
-            console.warn("[ShadowPulse] Partner Network Failed/Blocked.");
-
-            // If we already set the cached image, do nothing (keep showing it).
-            // If no cache (img hidden/empty), show 'Default' text.
-            if (!img.src || img.style.display === "none") {
-                const fallbackDiv = createEl("div");
-                fallbackDiv.textContent = "ShadowPulse";
-                fallbackDiv.style.color = "#4b5563";
-                fallbackDiv.style.lineHeight = "50px";
-                fallbackDiv.style.textAlign = "center";
-                fallbackDiv.style.fontWeight = "bold";
-                zone.innerHTML = ""; // Clear img
-                zone.appendChild(fallbackDiv);
-            }
-        };
-
-        loader.src = url;
-    } catch (err) {
-        console.error("[ShadowPulse] loadPartnerBanner error", err);
-    }
+    attemptLoad();
 }
