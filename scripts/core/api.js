@@ -49,6 +49,12 @@ export async function fetchPageContext(category, targetId, meta = {}) {
     return json;
 
   } catch (err) {
+    // Suppress common network noise
+    const msg = err.message || "";
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+      // transient network issue, ignore
+      return null;
+    }
     spLog("fetchPageContext error", err);
     return null;
   }
@@ -90,7 +96,13 @@ export async function fetchBitcoinStats() {
     } catch (e) { }
 
     return json;
+    return json;
   } catch (err) {
+    // Suppress common network noise
+    const msg = err.message || "";
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+      return null;
+    }
     spLog("fetchBitcoinStats error", err);
     return null;
   }
@@ -405,7 +417,11 @@ export async function trackPageView(memberUuid) {
       spLog("trackPageView failed with status " + res.status);
     }
   } catch (err) {
-    spLog("trackPageView error", err && err.message ? err.message : err);
+    // Suppress network errors
+    const msg = err && err.message ? err.message : String(err);
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return;
+
+    spLog("trackPageView error", msg);
   }
 }
 
