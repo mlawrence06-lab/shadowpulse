@@ -260,8 +260,8 @@ body.sp-dragging {
   height: 50px;
   border: none;
   border-radius: 6px;
-  margin: 0 2px;
-  /* TIGHTENED: Matches Ads/Logo spacing */
+  margin: 0 2px 0 8px;
+  /* Added left margin for spacing from ads zone */
   display: flex;
   flex-direction: column;
   justify-content: center;

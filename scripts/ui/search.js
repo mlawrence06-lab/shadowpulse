@@ -41,10 +41,10 @@ export function createSearchPanel(rootEl) {
     }
 
     let engine = await getState("searchEngine", "bitlist");
-    let baseUrl = "https://vod.fan/shadowpulse/website/search-bitlist.php";
+    let baseUrl = "https://shadowpulse.live/search-bitlist.php";
 
     if (engine === "bitlist") {
-      baseUrl = "https://vod.fan/shadowpulse/website/search-bitlist.php";
+      baseUrl = "https://shadowpulse.live/search-bitlist.php";
     }
     // Add other engines here in future
 

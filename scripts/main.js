@@ -202,7 +202,7 @@ function buildToolbar(root, voteContext) {
       openSettingsModal(root);
     },
     onReports: () => {
-      window.open("https://vod.fan/shadowpulse/website/reports/index.php", "_blank");
+      window.open("https://shadowpulse.live/reports/index.php", "_blank");
     }
   });
 
@@ -412,22 +412,14 @@ async function hydrateFullContext(root, header, voteContext) {
         refs.votesZone.classList.remove("sp-zone-loading");
 
         // Check Helper Setting and toggle Watermark
+        // ONLY create watermarks for voting contexts (topic/post)
         getState("voteHelper", true).then(enabled => {
           const wm = refs.votesZone.querySelector(".sp-vote-watermark");
           if (wm) {
             wm.style.display = enabled ? "block" : "none";
-          } else if (enabled) {
-            // If enabled but missing (e.g. initially hidden or failed create), create it?
-            // Usually createVotesZone (Step 652) handles creation. 
-            // If it wasn't created because setting was off, specific logic might be needed.
-            // But wait, Step 652 logic was: IF enabled, create.
-            // So if it was OFF, wm is null.
-            // If I turn it ON, I need to CREATE it dynamically here?
-            // Or easier: Always create it in createVotesZone but HIDDEN?
-            // No, simpler to just re-create it here if missing.
+          } else if (enabled && (ctx.kind === 'topic' || ctx.kind === 'post')) {
+            // Only create watermark for voting modes, not for board/profile
             const noun = (ctx.kind === 'post') ? 'Post' : 'Topic';
-            // Lazy import createEl? Or assume it's available? 
-            // createEl is imported in main.js.
             const watermark = createEl("div", ["sp-vote-watermark"]);
             watermark.textContent = noun.toUpperCase();
             refs.votesZone.appendChild(watermark);

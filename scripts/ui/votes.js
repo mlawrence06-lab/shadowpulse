@@ -60,14 +60,17 @@ export function createVotesZone(onVoteSelected, voteContext) {
     zone.appendChild(bottomRow);
 
     // WATERMARK (Background Text)
-    // Controlled by 'voteHelper' setting (default true)
-    import("../core/state.js").then(mod => mod.getState("voteHelper", true)).then(enabled => {
-      if (enabled) {
-        const watermark = createEl("div", ["sp-vote-watermark"]);
-        watermark.textContent = noun.toUpperCase(); // "TOPIC" or "POST"
-        zone.appendChild(watermark);
-      }
-    });
+    // Only show if we have voting buttons AND 'voteHelper' is enabled
+    if (buttons.length > 0) {
+      import("../core/state.js").then(mod => mod.getState("voteHelper", true)).then(enabled => {
+        if (enabled) {
+          const watermark = createEl("div", ["sp-vote-watermark"]);
+          watermark.textContent = noun.toUpperCase(); // "TOPIC" or "POST"
+          zone.appendChild(watermark);
+        }
+      });
+    }
+
 
   }
 

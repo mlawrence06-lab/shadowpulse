@@ -285,7 +285,7 @@ function buildSettingsModal(root) {
         throw new Error("No Member UUID found locally.");
       }
 
-      const res = await fetch("https://vod.fan/shadowpulse/api/v1/update_member_profile.php", {
+      const res = await fetch("https://shadowpulse.live/api/v1/update_member_profile.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -406,7 +406,7 @@ function buildSettingsModal(root) {
     return row;
   }
 
-  const diagUrl = "https://vod.fan/shadowpulse/website/reports/matrix.php";
+  const diagUrl = "https://shadowpulse.live/reports/matrix.php";
 
   statsBlock.appendChild(makeStatRow("Page Views:", "sp-stat-page-views"));
   // 2) Remove "Active " and apply diagUrl
@@ -423,7 +423,7 @@ function buildSettingsModal(root) {
   globalLink.rel = "noopener noreferrer";
 
   // 4) New URL
-  const reportBaseUrl = "https://vod.fan/shadowpulse/website/reports/index.php";
+  const reportBaseUrl = "https://shadowpulse.live/reports/index.php";
   globalLink.href = reportBaseUrl;
 
 
