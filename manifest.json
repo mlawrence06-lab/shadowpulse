@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ShadowPulse",
-  "version": "0.38.18",
-  "version_name": "0.38.18 (Beta)",
+  "version": "0.38.21",
+  "version_name": "0.38.21 (Beta)",
   "description": "BitcoinTalk Alternative Recognition Tool",
   "permissions": [
     "storage"

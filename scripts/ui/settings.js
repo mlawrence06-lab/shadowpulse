@@ -221,11 +221,11 @@ function buildSettingsModal(root) {
       // Try state first for Member ID
       const memId = await getState("memberId", 0);
       if (memId && memId > 0) {
-        nameInput.placeholder = String(memId);
+        nameInput.placeholder = "User " + String(memId);
       } else if (items.stats_member_id) {
-        nameInput.placeholder = String(items.stats_member_id);
+        nameInput.placeholder = "User " + String(items.stats_member_id);
       } else {
-        nameInput.placeholder = "Member ID";
+        nameInput.placeholder = "User ID";
       }
     } catch (e) { console.error(e); }
   })();
@@ -344,7 +344,7 @@ function buildSettingsModal(root) {
 
   const memberRow = createEl("div", ["sp-settings-row"]);
   const memberLabel = createEl("span", ["sp-settings-row-label"]);
-  memberLabel.textContent = "Member Number:";
+  memberLabel.textContent = "Extension User:";
   const memberValue = createEl("span", ["sp-settings-row-value", "sp-settings-stat-value"]);
   memberValue.dataset.role = "sp-member-id";
   memberValue.textContent = "—";
