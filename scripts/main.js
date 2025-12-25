@@ -411,20 +411,7 @@ async function hydrateFullContext(root, header, voteContext) {
       if (refs.votesZone) {
         refs.votesZone.classList.remove("sp-zone-loading");
 
-        // Check Helper Setting and toggle Watermark
-        // ONLY create watermarks for voting contexts (topic/post)
-        getState("voteHelper", true).then(enabled => {
-          const wm = refs.votesZone.querySelector(".sp-vote-watermark");
-          if (wm) {
-            wm.style.display = enabled ? "block" : "none";
-          } else if (enabled && (ctx.kind === 'topic' || ctx.kind === 'post')) {
-            // Only create watermark for voting modes, not for board/profile
-            const noun = (ctx.kind === 'post') ? 'Post' : 'Topic';
-            const watermark = createEl("div", ["sp-vote-watermark"]);
-            watermark.textContent = noun.toUpperCase();
-            refs.votesZone.appendChild(watermark);
-          }
-        });
+        // Watermark logic removed
       }
     }
 

@@ -59,18 +59,7 @@ export function createVotesZone(onVoteSelected, voteContext) {
     bottomRow.appendChild(summaryEl);
     zone.appendChild(bottomRow);
 
-    // WATERMARK (Background Text)
-    // Only show if we have voting buttons AND 'voteHelper' is enabled
-    if (buttons.length > 0) {
-      import("../core/state.js").then(mod => mod.getState("voteHelper", true)).then(enabled => {
-        if (enabled) {
-          const watermark = createEl("div", ["sp-vote-watermark"]);
-          watermark.textContent = noun.toUpperCase(); // "TOPIC" or "POST"
-          zone.appendChild(watermark);
-        }
-      });
-    }
-
+    // WATERMARK (Background Text) - REMOVED per user request
 
   }
 
@@ -181,14 +170,13 @@ export function renderVoteSummary(summaryEl, payload, voteContext) {
 
   if (count > 0) {
     const suffix = count === 1 ? "vote" : "votes";
-    let text = `${formatNumber(count)} ${suffix}`; // Removed noun
-
+    let text = `${formatNumber(count)} ${noun} ${suffix}`; // Added noun
     if (rank > 0) {
-      text += ` (Ranked ${getOrdinal(rank)})`;
+      text += ` (${getOrdinal(rank)})`;
     }
     summaryEl.textContent = text;
   } else {
     // Also simplified default text
-    summaryEl.textContent = "No votes yet";
+    summaryEl.textContent = defaultText;
   }
 }

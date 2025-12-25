@@ -147,26 +147,7 @@ function buildSettingsModal(root) {
   searchRow.appendChild(searchSelect);
   settingsBlock.appendChild(searchRow);
 
-  // 3. POST/TOPIC Helper
-  const helperRow = createEl("div", ["sp-settings-row"]);
-  const helperLabel = createEl("span", ["sp-settings-row-label"]);
-  helperLabel.textContent = "POST/TOPIC Helper:";
-
-  const helperSelect = createEl("select", ["sp-settings-select"]);
-  helperSelect.appendChild(new Option("On", "on"));
-  helperSelect.appendChild(new Option("Off", "off"));
-
-  helperSelect.addEventListener("change", async () => {
-    const val = helperSelect.value === "on";
-    await setState("voteHelper", val);
-    savePreferences({ voteHelper: val });
-  });
-
-  getState("voteHelper", true).then(val => { helperSelect.value = val ? "on" : "off"; });
-
-  helperRow.appendChild(helperLabel);
-  helperRow.appendChild(helperSelect);
-  settingsBlock.appendChild(helperRow);
+  // 3. POST/TOPIC Helper - REMOVED per user request
 
   // 3. Bitcoin Source
   const btcRow = createEl("div", ["sp-settings-row"]);
