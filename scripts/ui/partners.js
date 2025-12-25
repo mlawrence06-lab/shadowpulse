@@ -46,23 +46,14 @@ export function createPartnersZone() {
  */
 export async function loadPartnerBanner(zone, img, link) {
     // Retry config
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY_MS = 2000;
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY_MS = 3000;
 
     const attemptLoad = async (retryCount = 0) => {
         try {
             const now = Date.now();
 
-            // 1. Try to Load Cached Ad FIRST (Instant Visual) - Only on first attempt
-            if (retryCount === 0) {
-                const cached = await getState("cached_partner_data", null);
-                if (cached && (now - cached.time < FALLBACK_TTL)) {
-                    img.src = cached.data;
-                    img.style.display = "block";
-                }
-            }
-
-            // 2. Network Fetch (Fresh via Proxy)
+            // 1. Network Fetch (Fresh via Proxy) - No Cache
             const cb = Math.floor(Math.random() * 1e16);
             const baseUrl = SP_CONFIG.GET_BANNER_AD_API || "https://vod.fan/shadowpulse/api/v1/get_banner_ad.php";
             const separator = baseUrl.includes("?") ? "&" : "?";
@@ -73,26 +64,12 @@ export async function loadPartnerBanner(zone, img, link) {
             loader.onload = () => {
                 img.src = url;
                 img.style.display = "block";
-
-                // Cache success
-                try {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 150;
-                    canvas.height = 50;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(loader, 0, 0, 150, 50);
-                    const dataURL = canvas.toDataURL("image/png");
-                    setState("cached_partner_data", { data: dataURL, time: now });
-                } catch (e) {
-                    // CORS/Taint expected
-                }
             };
 
             loader.onerror = () => {
                 if (retryCount < MAX_RETRIES) {
-                    // Debug only - don't scare user
                     console.debug(`[ShadowPulse] Ad Network Failed. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
-                    setTimeout(() => attemptLoad(retryCount + 1), RETRY_DELAY_MS * (retryCount + 1)); // Exponential-ish backoff
+                    setTimeout(() => attemptLoad(retryCount + 1), RETRY_DELAY_MS);
                 } else {
                     console.warn("[ShadowPulse] Ad Network Blocked/Failed after retries.");
                     // Fallback UI

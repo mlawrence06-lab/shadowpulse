@@ -1,5 +1,5 @@
 BETA Install Instructions
-v0.38.3 - Ad Proxy Fix Implemented
+v0.38 - Host relocation
 
 In order:
 1) Remove any older extensions and close all bitcointalk tabs in all browsers
