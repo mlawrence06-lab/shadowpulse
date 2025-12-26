@@ -99,9 +99,40 @@ export function renderStats(priceEl, graphEl, data) {
   graphEl.innerHTML = `
     <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%; height:100%; display:block;">
       <line x1="0" y1="${startY.toFixed(1)}" x2="${width}" y2="${startY.toFixed(1)}" 
-            stroke="${strokeColor}" stroke-width="1" stroke-dasharray="2, 1" opacity="0.8" />
+            stroke="${strokeColor}" stroke-width="2" stroke-dasharray="2, 1" opacity="0.8" />
             
-      <path d="${d}" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+      ${history.map((_, i) => {
+    // Dynamic Grid Lines based on Time
+    // History is array of 60 points (1 min intervals). Last point = last_candle_time (or approx now).
+    // Timestamp of point i:
+    //   lastTimestamp - (history.length - 1 - i) * 60 * 1000
+
+    let pointTime;
+    if (data.last_candle_time) {
+      // Parse SQL datetime "YYYY-MM-DD HH:MM:SS" manually or via Date
+      // Note: 'last_candle_time' comes from server (UTC presumably).
+      // We can create a Date object.
+      // Replace space with T to ensure ISO parsing compatibility if needed, though most browsers handle it.
+      const lastD = new Date(data.last_candle_time.replace(" ", "T") + "Z"); // Assume UTC
+      const ms = lastD.getTime();
+      pointTime = new Date(ms - (history.length - 1 - i) * 60000);
+    } else {
+      // Fallback if server update hasn't propagated or field missing
+      pointTime = new Date(Date.now() - (history.length - 1 - i) * 60000);
+    }
+
+    const minutes = pointTime.getMinutes();
+
+    // Draw line if minute is 0, 15, 30, 45
+    if (minutes % 15 === 0) {
+      const x = i * stepX;
+      return `<line x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${height}" 
+                     stroke="${strokeColor}" stroke-width="2" stroke-dasharray="2, 1" opacity="0.3" />`;
+    }
+    return "";
+  }).join("")}
+
+      <path d="${d}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
     </svg>
   `;
 }

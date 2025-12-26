@@ -3,7 +3,8 @@
 /**
  * ShadowPulse - main.js
  * Validates host, creates root, assembles zones and wires up behaviors.
- * UPDATED: Implements new phased loading, consolidated periodic refresh, and new logo logic.
+ * ShadowPulse - main.js
+ * Validates host, creates root, assembles zones and wires up behaviors.
  */
 
 import { SP_CONFIG } from "./core/config.js";
@@ -14,7 +15,7 @@ import { getOrCreateMemberUuid } from "./core/member.js";
 import { getVotingContext } from "./core/pageContext.js";
 
 import { createLogoZone } from "./ui/logo.js";
-import { createPartnersZone, loadPartnerBanner } from "./ui/partners.js";
+import { createPartnersZone, loadPartnerBanner, preloadAd } from "./ui/partners.js";
 import { createStatsZone, renderStats } from "./ui/stats.js";
 import { createVotesZone, setSelected, renderVoteSummary } from "./ui/votes.js";
 import { createControlZone } from "./ui/control.js";
@@ -112,7 +113,7 @@ function buildRoot(theme, isMinimized = false, savedLeft = null) {
   root.style.position = "fixed";
   root.classList.add(`sp-theme-${theme}`);
 
-  // v0.36.35 FIX: Apply Saved Position immediately
+  // Apply Saved Position immediately
   if (typeof savedLeft === "number") {
     root.style.left = savedLeft + "px";
     root.style.transform = "none";
@@ -123,6 +124,21 @@ function buildRoot(theme, isMinimized = false, savedLeft = null) {
 
   root.style.bottom = "16px";
   root.style.zIndex = String(SP_CONFIG.Z_INDEX_ROOT);
+
+  // Inject CSS for Minimized Mode Price Visibility
+  const style = document.createElement("style");
+  style.textContent = `
+    .sp-root.sp-root-minimized.sp-min-show-price .sp-zone-stats {
+      display: flex !important;
+      /* Hide graph line, keep price text? Or show full zone? User said "show btc price". */
+      /* Usually minimized hides everything. We force flex. */
+      /* But the graph might be too wide. Let's see. */
+    }
+    /* If we only want price text and not the sparkline in min mode: */
+    /* .sp-root.sp-root-minimized.sp-min-show-price .sp-sparkline { display: none !important; } */
+  `;
+  root.appendChild(style);
+
   document.body.appendChild(root);
   return root;
 }
@@ -188,15 +204,16 @@ function buildToolbar(root, voteContext) {
       const next = !current;
       await setState("autoMin", next);
 
-      // Auto Min now applies minimized state immediately implies it stays minimized?
-      // Or does it toggle the "Minimized" class?
-      // Logic from old onMinimize: applyMinimizedState(root, nowMin);
-      // But onAutoMin logic was: applyMinimizedState(root, next);
-      // Wait, Auto Min should TOGGLE the PREFERENCE.
-      // Does it toggle the STATE?
-      // Step 685: onAutoMin: async () => { ... setState("autoMin", next); applyMinimizedState(root, next); }
-      // So yes, clicking Auto Min toggles it immediately.
       applyMinimizedState(root, next);
+
+      // Apply Price Visibility immediately if setting is on
+      const showPrice = await getState("minimized_show_price", false);
+      if (next && showPrice) {
+        root.classList.add("sp-min-show-price");
+      } else {
+        // If restoring or min-price is off, standard behavior
+        root.classList.remove("sp-min-show-price");
+      }
     },
     onSettings: () => {
       openSettingsModal(root);
@@ -262,10 +279,10 @@ function attachSearch(root, header) {
   return { panel, input };
 }
 
-async function hydrateAds(header) {
+async function hydrateAds(header, adPromise = null) {
   try {
     const refs = header._spRefs;
-    await loadPartnerBanner(refs.adsZone, refs.adsImg, refs.adsLink);
+    await loadPartnerBanner(refs.adsZone, refs.adsImg, refs.adsLink, adPromise);
     // ASAP: Make Ad zone visible
     if (refs.adsZone) {
       refs.adsZone.classList.remove("sp-zone-loading");
@@ -316,10 +333,7 @@ function getOrdinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-// scripts/main.js - Replacing hydrateVoteAndLogo
-
 // === UNIFIED HYDRATION ===
-// Replaces bootstrapMember + hydrateVote + hydrateStats
 
 async function hydrateFullContext(root, header, voteContext) {
   try {
@@ -425,9 +439,23 @@ async function hydrateFullContext(root, header, voteContext) {
       // DEBUG: Log BTC Data
 
       // Only render if not minimized (or if just un-minimized)
-      if (!root.classList.contains("sp-root-minimized")) {
+      // OR if minimized and prefer "minimized_show_price" is true
+      const isMinimized = root.classList.contains("sp-root-minimized");
+      const showPriceMin = await getState("minimized_show_price", false);
+
+      if (!isMinimized || showPriceMin) {
         renderStats(refs.statsPrice, refs.statsGraph, fullData.btc_stats);
         if (refs.statsZone) refs.statsZone.classList.remove("sp-zone-loading");
+
+        // Ensure visibility CSS is correct for mixed state
+        if (isMinimized && showPriceMin && refs.statsZone) {
+          // We need to override the default CSS that hides zones in minimized mode
+          // This is tricky without changing CSS.
+          // Alternative: add a specific class to root "sp-min-show-price"
+          root.classList.add("sp-min-show-price");
+        } else {
+          root.classList.remove("sp-min-show-price");
+        }
       }
     } else {
       // Always show zone (will be empty/default if not rendered)
@@ -446,22 +474,28 @@ async function hydrateFullContext(root, header, voteContext) {
 // Init Logic
 (async function init() {
   try {
+    // === PARALLEL PRELOAD ===
+    // Start fetching ad immediately to minimize latency
+    const adPromise = preloadAd();
+
     if (!SP_CONFIG.SITE_PATTERN.test(location.hostname)) return;
     if (document.getElementById(SP_CONFIG.ROOT_ID)) return;
 
     const theme = await getState("theme", SP_CONFIG.DEFAULT_THEME);
     const voteContext = getVotingContext(); // Sync parse
 
-    // v0.36.30 FIX: Fetch AutoMin EARLY to prevent flash
-    // v0.36.35 FIX: Fetch Position EARLY to prevent flash
-    const [autoMin, savedLeft] = await Promise.all([
+    // Fetch State EARLY to prevent flash
+    const [autoMin, savedLeft, minShowPrice] = await Promise.all([
       getState("autoMin", false),
-      getState("toolbarLeft", null)
+      getState("toolbarLeft", null),
+      getState("minimized_show_price", false)
     ]);
     const isAutoMin = autoMin === true;
 
     // 1. Root & Base
     const root = buildRoot(theme, isAutoMin, savedLeft);
+    if (minShowPrice) root.classList.add("sp-min-show-price");
+
     const header = buildToolbar(root, voteContext);
 
     // No longer need to apply it late
@@ -473,14 +507,11 @@ async function hydrateFullContext(root, header, voteContext) {
     // Member Bootstrap is now implicit in first hydrate
     const memberUuid = await getOrCreateMemberUuid();
 
-    // v0.34.4 FIX: Explicitly bootstrap (register) the member before fetching context.
+    // Explicitly bootstrap (register) the member before fetching context.
     // This prevents 500 Errors on the backend if the SP assumes existence.
     try { await bootstrapMember(memberUuid); } catch (e) { }
 
     spLog("ShadowPulse build " + SP_CONFIG.VERSION + " initialized");
-    // spLog("ShadowPulse member UUID", memberUuid);
-    // trackPageView(memberUuid); // Removed: Handled in SP now.
-
     // Saved Position (Applied in buildRoot now)
     // const savedLeft = await getState("toolbarLeft", null);
     // if (typeof savedLeft === "number") { ... }
@@ -502,7 +533,20 @@ async function hydrateFullContext(root, header, voteContext) {
         if (isMinimized) {
           applyMinimizedState(root, false);
           try { await setState("autoMin", false); } catch (err) { }
-          hydrateAds(header);
+
+          // Restore saved position if available
+          const savedLeft = await getState("toolbarLeft", null);
+          if (typeof savedLeft === "number") {
+            root.style.left = savedLeft + "px";
+            root.style.transform = "none";
+          } else {
+            // If no saved position, maybe center it?
+            // But existing CSS might center it if style.left is removed.
+            // If we don't have a saved left, we can leave it or clear styles.
+            // But usually a savedLeft exists if dragged.
+          }
+
+          hydrateAds(header, adPromise); // RE-USE promise if possible
           hydrateFullContext(root, header, voteContext);
           return;
         }
@@ -514,15 +558,13 @@ async function hydrateFullContext(root, header, voteContext) {
     // const autoMin = (await getState("autoMin", false)) === true;
     // if (autoMin) applyMinimizedState(root, true);
 
-    // ... imports
-    // ... imports removed
+
 
     // ... existing code ...
 
     // === INITIAL LOAD (Parallel) ===
-    hydrateAds(header);
+    hydrateAds(header, adPromise);
     hydrateStats(header); // Fallback
-    // injectPostVotes(); // REDACTED: User prefers Toolbar-only design.
     await hydrateFullContext(root, header, voteContext); // Main Context
 
     // spLog("ShadowPulse initialized."); // Consolidated above
@@ -551,6 +593,44 @@ async function hydrateFullContext(root, header, voteContext) {
       const currentCtx = getVotingContext();
       await hydrateFullContext(root, header, currentCtx);
     }, refreshIntervalMins * 60 * 1000);
+
+    // === SMART RESIZE ===
+    window.addEventListener("resize", async () => {
+      // Check if toolbar is clipped off-screen
+      const rect = root.getBoundingClientRect();
+      const toolbarWidth = rect.width;
+      const viewportWidth = window.innerWidth;
+
+      // 1. Get Persistent Preference (The "Restore" Target)
+      let preferredLeft = await getState("toolbarLeft", null);
+      if (typeof preferredLeft !== "number") {
+        // Default to center if no preference
+        preferredLeft = (viewportWidth - toolbarWidth) / 2;
+      }
+
+      const minLeft = 8;
+      const maxLeft = viewportWidth - toolbarWidth - 8;
+
+      // 2. Check if Preferred fits in current viewport
+      // If it's too far right OR too far left (negative), it's clipped.
+      const isClipped = (preferredLeft > maxLeft) || (preferredLeft < minLeft);
+
+      let targetLeft = preferredLeft;
+
+      if (isClipped) {
+        // CLIP DETECTED: Force Center
+        targetLeft = (viewportWidth - toolbarWidth) / 2;
+      }
+
+      // Final Clamp to be safe (ensure 8px margin always)
+      targetLeft = Math.max(minLeft, targetLeft);
+
+      // Apply visually (DO NOT SAVE state here, so we remember original)
+      // Only apply if currently absolute positioned
+      if (root.style.transform === "none") {
+        root.style.left = targetLeft + "px";
+      }
+    });
 
   } catch (err) {
     spError("init error", err);

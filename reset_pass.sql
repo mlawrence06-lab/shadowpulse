@@ -1,0 +1,2 @@
+ALTER USER 'mlawrence06'@'localhost' IDENTIFIED BY '8rVjbme3ErfJJq0rg69mQkN0MdBmpP';
+FLUSH PRIVILEGES;

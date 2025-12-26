@@ -1,17 +1,15 @@
 "use strict";
 
 /**
- * ShadowPulse - ui/partners.js (formerly ads.js)
- * Robust Ad Loading: Cache First -> Network -> Update Cache.
- * Fallback to Default on failure.
+ * ShadowPulse - ui/partners.js
+ * Loading of partner banners.
+ * Updated: Direct fetch without retries or caching.
  */
 
 import { createEl } from "../core/utils.js";
-import { getState, setState } from "../core/state.js";
 import { SP_CONFIG } from "../core/config.js";
 
 // use the proxy API from config
-const FALLBACK_TTL = 6 * 60 * 60 * 1000; // 6 hours
 
 /**
  * Creates the partners zone container.
@@ -21,7 +19,7 @@ export function createPartnersZone() {
     zone.style.width = "150px";
     zone.style.height = "50px";
     zone.style.position = "relative";
-    zone.style.backgroundColor = "#1f2937"; // Dark Placeholder
+    // zone.style.backgroundColor = "#1f2937"; // Dark Placeholder REMOVED
     zone.style.overflow = "hidden";
 
     // Img Element
@@ -44,54 +42,45 @@ export function createPartnersZone() {
 /**
  * Loads the banner ad (partner image) with retry logic.
  */
-export async function loadPartnerBanner(zone, img, link) {
-    // Retry config
-    const MAX_RETRIES = 5;
-    const RETRY_DELAY_MS = 3000;
+export function preloadAd() {
+    return new Promise((resolve, reject) => {
+        const cb = Math.floor(Math.random() * 1e16);
+        const baseUrl = SP_CONFIG.GET_BANNER_AD_API || "https://shadowpulse.live/api/v1/get_banner_ad.php";
+        const separator = baseUrl.includes("?") ? "&" : "?";
+        const url = `${baseUrl}${separator}zoneid=1&cb=${cb}`;
 
-    const attemptLoad = async (retryCount = 0) => {
-        try {
-            const now = Date.now();
+        const loader = new Image();
+        loader.onload = () => resolve(url);
+        loader.onerror = () => reject(new Error("Ad Load Failed"));
+        loader.src = url;
+    });
+}
 
-            // 1. Network Fetch (Fresh via Proxy) - No Cache
-            const cb = Math.floor(Math.random() * 1e16);
-            const baseUrl = SP_CONFIG.GET_BANNER_AD_API || "https://vod.fan/shadowpulse/api/v1/get_banner_ad.php";
-            const separator = baseUrl.includes("?") ? "&" : "?";
-            const url = `${baseUrl}${separator}zoneid=2&cb=${cb}`;
+/**
+ * Loads the banner ad (partner image).
+ * Accepts an optional preloading Promise.
+ */
+export async function loadPartnerBanner(zone, img, link, adPromise = null) {
+    try {
+        // Use provided promise or start a new fetch
+        const fetcher = adPromise || preloadAd();
 
-            const loader = new Image();
+        const url = await fetcher;
+        img.src = url;
+        img.style.display = "block";
 
-            loader.onload = () => {
-                img.src = url;
-                img.style.display = "block";
-            };
-
-            loader.onerror = () => {
-                if (retryCount < MAX_RETRIES) {
-                    console.debug(`[ShadowPulse] Ad Network Failed. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
-                    setTimeout(() => attemptLoad(retryCount + 1), RETRY_DELAY_MS);
-                } else {
-                    console.warn("[ShadowPulse] Ad Network Blocked/Failed after retries.");
-                    // Fallback UI
-                    if (!img.src || img.style.display === "none") {
-                        const fallbackDiv = createEl("div");
-                        fallbackDiv.textContent = "ShadowPulse";
-                        fallbackDiv.style.color = "#4b5563";
-                        fallbackDiv.style.lineHeight = "50px";
-                        fallbackDiv.style.textAlign = "center";
-                        fallbackDiv.style.fontWeight = "bold";
-                        zone.innerHTML = "";
-                        zone.appendChild(fallbackDiv);
-                    }
-                }
-            };
-
-            loader.src = url;
-
-        } catch (err) {
-            console.error("[ShadowPulse] loadPartnerBanner error", err);
+    } catch (err) {
+        console.warn("[ShadowPulse] Ad Network Failed.", err);
+        // Fallback UI
+        if (!img.src || img.style.display === "none") {
+            const fallbackDiv = createEl("div");
+            fallbackDiv.textContent = "ShadowPulse";
+            fallbackDiv.style.color = "#4b5563";
+            fallbackDiv.style.lineHeight = "50px";
+            fallbackDiv.style.textAlign = "center";
+            fallbackDiv.style.fontWeight = "bold";
+            zone.innerHTML = "";
+            zone.appendChild(fallbackDiv);
         }
-    };
-
-    attemptLoad();
+    }
 }

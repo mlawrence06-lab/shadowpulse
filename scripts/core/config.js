@@ -10,13 +10,13 @@ export const SP_CONFIG = {
   DEFAULT_THEME: "light",
   DEFAULT_SEARCH_ENGINE_NAME: "Bitlist Search",
   DEFAULT_SEARCH_ENGINE_URL: "https://shadowpulse.live/search-bitlist.php",
-  DEV_MODE: true,
+  DEV_MODE: false,
   REFRESH_INTERVAL_MINUTES: 0.5, // Default to 30 seconds (0.5 mins)
   SITE_PATTERN: /(^|\.)bitcointalk\.org$/i,
 
   // APIs
-  GET_BANNER_AD_API: "https://vod.fan/shadowpulse/api/v1/get_banner_ad.php",
-  ADS_BANNER_LINK: "https://vod.fan/shadowpulse/advertise.php",
+  GET_BANNER_AD_API: "https://shadowpulse.live/api/v1/get_banner_ad.php",
+  ADS_BANNER_LINK: "https://shadowpulse.live/adserver/www/admin/index.php",
 
   GET_STATS_API: "https://shadowpulse.live/api/v1/get_stats.php",
   GET_VOTE_API: "https://shadowpulse.live/api/v1/get_vote.php",

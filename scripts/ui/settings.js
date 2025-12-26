@@ -169,6 +169,31 @@ function buildSettingsModal(root) {
   btcRow.appendChild(btcSelect);
   settingsBlock.appendChild(btcRow);
 
+  // 4. Minimize Mode (Dropdown)
+  const minRow = createEl("div", ["sp-settings-row"]);
+  const minLabel = createEl("span", ["sp-settings-row-label"]);
+  minLabel.textContent = "Minimize Mode:";
+
+  const minSelect = createEl("select", ["sp-settings-select"]);
+  minSelect.appendChild(new Option("Logo Only", "false")); // default
+  minSelect.appendChild(new Option("Logo and Price", "true"));
+
+  minSelect.addEventListener("change", async () => {
+    const val = minSelect.value;
+    const isShowPrice = (val === "true");
+    await setState("minimized_show_price", isShowPrice);
+    savePreferences({ minimized_show_price: isShowPrice });
+  });
+
+  // Load state
+  getState("minimized_show_price", false).then(val => {
+    minSelect.value = String(val);
+  });
+
+  minRow.appendChild(minLabel);
+  minRow.appendChild(minSelect);
+  settingsBlock.appendChild(minRow);
+
   // 2.5 Custom Name (Now Moved to Bottom of Settings)
   const nameRow = createEl("div", ["sp-settings-row"]);
   const nameLabel = createEl("span", ["sp-settings-row-label"]);
@@ -414,6 +439,8 @@ function buildSettingsModal(root) {
 
   statsSection.appendChild(statsBlock);
   body.appendChild(statsSection);
+
+  // ===== MINIMIZE SETTINGS REMOVED (Moved to Main Block) =====
 
   // ===== ACCOUNT SECURITY SECTION (With Toggle) =====
   const secSection = createEl("div", ["sp-settings-section"]);

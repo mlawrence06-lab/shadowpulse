@@ -23,7 +23,7 @@ export function createControlZone({ onAutoMin, onSettings, onReports }) {
   // Removed MINIMIZE link per user request (v0.36.34)
   // zone.appendChild(makeLink("MINIMIZE", "sp-ctrl-minimize", onMinimize));
 
-  zone.appendChild(makeLink("AUTO MIN", "sp-ctrl-auto-min", onAutoMin));
+  zone.appendChild(makeLink("MINIMIZE", "sp-ctrl-auto-min", onAutoMin));
   zone.appendChild(makeLink("SETTINGS", "sp-ctrl-settings", onSettings));
   zone.appendChild(makeLink("REPORTS", "sp-ctrl-reports", onReports));
 

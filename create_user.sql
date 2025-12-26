@@ -1,0 +1,3 @@
+CREATE USER 'mlawrence06'@'localhost' IDENTIFIED BY '8rVjbme3ErfJJq0rg69mQkN0MdBmpP';
+GRANT ALL PRIVILEGES ON *.* TO 'mlawrence06'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
