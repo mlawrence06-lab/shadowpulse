@@ -23,7 +23,7 @@ ShadowPulse is the ultimate companion for the **Bitcointalk.org** forum, designe
 
 ### Privacy & Security
 *   **Secure:** Built with security in mind, ensuring your forum interactions remain safe.
-*   **Transparent:** We respect your data. ShadowPulse only collects the minimum data required to facilitate voting and ranking features.
+*   **Transparent:** We respect your data. The extension uses local storage to save the following specific data items: `theme` (UI appearance setting), `toolbarLeft` (Toolbar X-coordinate), `autoMin` (Toolbar minimize preference), `minimized_show_price` (Price visibility in minimized mode), `searchEngine` (Search provider selection), `memberUuid` (Anonymous installation token), `memberId` (Anonymous user index), and `memberRestoreAck` (Restoration state flag). No personal user data is permanently stored or sold.
 
 ## Why ShadowPulse?
 
