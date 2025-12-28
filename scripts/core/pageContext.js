@@ -176,6 +176,7 @@ const BOARD_NAMES = {
   205: "Discussioni avanzate e sviluppo",
   206: "Desenvolvimento & Discussões Técnicas",
   208: "Débutants",
+  217: "Collectibles",
   219: "Pilipinas",
   220: "Trgovina",
   221: "Altcoins (Hrvatski)",

@@ -333,6 +333,34 @@ function getOrdinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
+// Helper: Wait up to 2 seconds for a non-default title
+function waitForTitle() {
+  return new Promise(resolve => {
+    let attempts = 0;
+    const maxAttempts = 20; // 2s total (100ms * 20)
+
+    const check = () => {
+      const t = document.title || "";
+      // If title is meaningful (contains " - Bitcoin Forum" or just isn't default URL/Loading)
+      // "Loading..." isn't a standard BTT title, but just in case.
+      // BTT usually sets title server-side, but sometimes extensions interfere.
+      // We mainly want to ensure document.title is populated.
+      if (t && t.length > 0 && t !== "Bitcoin Forum") {
+        resolve(t);
+        return;
+      }
+
+      attempts++;
+      if (attempts >= maxAttempts) {
+        resolve(document.title || "");
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
 // === UNIFIED HYDRATION ===
 
 async function hydrateFullContext(root, header, voteContext) {
@@ -348,8 +376,10 @@ async function hydrateFullContext(root, header, voteContext) {
 
     // Scrape Metadata
     const meta = {};
-    if (cat === 'topic' || cat === 'post' || cat === 'profile') {
-      let fullTitle = document.title || "";
+    if (cat === 'topic' || cat === 'post' || cat === 'profile' || cat === 'board') {
+      // WaitForTitle: Ensure we don't send "Loading..." or empty titles
+      let fullTitle = await waitForTitle();
+
       // Remove " - Bitcoin Forum" suffix if present
       fullTitle = fullTitle.replace(" - Bitcoin Forum", "").trim();
 
