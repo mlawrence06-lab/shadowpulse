@@ -111,84 +111,12 @@ try {
     }
 
     if ($isStale) {
-        $dataUpdated = false;
-
-        // Try btc_logic.php first (cleaner separation)
         $btcFile = __DIR__ . '/btc_logic.php';
         if (file_exists($btcFile)) {
             require_once $btcFile;
             if (function_exists('get_btc_data')) {
+                // Calls external API + INSERTs
                 $btcData = get_btc_data($pdo);
-                $dataUpdated = true;
-            }
-        }
-
-        // Fallback: Inline Logic (Same as get_stats.php)
-        if (!$dataUpdated) {
-             // FETCH FROM BINANCE US (Limit 60 candles, 1m interval)
-            $url = "https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60";
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            // Time out quickly to avoid hanging
-            curl_setopt($ch, CURLOPT_TIMEOUT, 3); 
-            $json = curl_exec($ch);
-            curl_close($ch);
-    
-            $data = json_decode($json, true);
-            if (is_array($data) && count($data) > 0) {
-                // Insert/Update DB
-                $stmtInsert = $pdo->prepare("
-                    INSERT IGNORE INTO btc_price_history (symbol, candle_time, open_price, high_price, low_price, close_price, volume)
-                    VALUES (:sym, :time, :open, :high, :low, :close, :vol)
-                ");
-    
-                foreach ($data as $candle) {
-                    $ts = (float) $candle[0] / 1000;
-                    $dt = date('Y-m-d H:i:s', $ts);
-    
-                    $stmtInsert->execute([
-                        ':sym' => 'BTCUSDT',
-                        ':time' => $dt,
-                        ':open' => $candle[1],
-                        ':high' => $candle[2],
-                        ':low' => $candle[3],
-                        ':close' => $candle[4],
-                        ':vol' => $candle[5]
-                    ]);
-                }
-                
-                // Refetch from DB to get consistent structure
-                 $stmtGet = $pdo->prepare("
-                    SELECT close_price, open_price 
-                    FROM (
-                        SELECT close_price, open_price, candle_time
-                        FROM btc_price_history
-                        WHERE symbol = 'BTCUSDT'
-                        ORDER BY candle_time DESC
-                        LIMIT 60
-                    ) sub
-                    ORDER BY candle_time ASC
-                ");
-                $stmtGet->execute();
-                $rows = $stmtGet->fetchAll(PDO::FETCH_ASSOC);
-
-                if (!empty($rows)) {
-                    $last = end($rows);
-                    $first = reset($rows);
-                    $price = (float) $last['close_price'];
-                    $start = (float) $first['close_price'];
-                    $trend = ($price >= $start) ? 'up' : 'down';
-            
-                    $history = array_map(function ($r) { return (float) $r['close_price']; }, $rows);
-            
-                    $btcData = [
-                        'price_val' => $price,
-                        'price_label' => '$' . number_format($price, 2),
-                        'trend' => $trend,
-                        'history' => $history
-                    ];
-                }
             }
         }
     } else {
